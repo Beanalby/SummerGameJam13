@@ -43,7 +43,9 @@ public class MatchBoard : MonoBehaviour {
     public Tile[,] board = null;
     private int squareMask;
 
-    Tile selected = null;
+    private float dragThreshold = 1000;
+    Vector3 dragStart = Vector3.zero;
+    Tile dragTile = null;
 
 	// Use this for initialization
 	void Start () {
@@ -70,19 +72,9 @@ public class MatchBoard : MonoBehaviour {
         if (matches.Count != 0) {
             HandleMatches(matches);
         }
-        if (Input.GetMouseButtonDown(0)) {
-            Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
-            RaycastHit hit;
-            if (Physics.Raycast(ray, out hit, Mathf.Infinity, squareMask)) {
-                selected = hit.collider.GetComponent<Tile>();
-            }
-        }
+        HandleDrag();
+
         if (Input.GetKeyDown(KeyCode.Space)) {
-            //if (HasPotentialMatch()) {
-            //    Debug.Log("There's a match!");
-            //} else {
-            //    Debug.Log("no match :(");
-            //}
             List<Position> newMove = FindMatch();
             if (newMove == null) {
                 Debug.Log("No move :(");
@@ -92,19 +84,39 @@ public class MatchBoard : MonoBehaviour {
             }
 
         }
-        if (Input.GetKeyDown(KeyCode.S)) {
-            StartCoroutine(SwapTile(selected, new Position(0, -1)));
-        }
-        if (Input.GetKeyDown(KeyCode.W)) {
-            StartCoroutine(SwapTile(selected, new Position(0, 1)));
-        }
-        if (Input.GetKeyDown(KeyCode.A)) {
-            StartCoroutine(SwapTile(selected, new Position(-1, 0)));
-        }
-        if (Input.GetKeyDown(KeyCode.D)) {
-            StartCoroutine(SwapTile(selected, new Position(1, 0)));
-        }
 	}
+
+    private void HandleDrag() {
+        if (Input.GetMouseButtonDown(0)) {
+            Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+            RaycastHit hit;
+            if (Physics.Raycast(ray, out hit, Mathf.Infinity, squareMask)) {
+                dragTile = hit.collider.GetComponent<Tile>();
+                dragStart = Input.mousePosition;
+            }
+        }
+        if (Input.GetMouseButtonUp(0) && dragTile != null) {
+            dragTile = null;
+            dragStart = Vector3.zero;
+        }
+        if (dragTile != null) {
+            Vector3 diff = Input.mousePosition - dragStart;
+            if (diff.sqrMagnitude > dragThreshold) {
+                // move the tile in whatever direction is largest
+                if (Mathf.Abs(diff.x) > Mathf.Abs(diff.y)) {
+                    StartCoroutine(SwapTile(dragTile,
+                        new Position(diff.x > 0 ? 1 : -1, 0)));
+                } else {
+                    StartCoroutine(SwapTile(dragTile,
+                        new Position(0, diff.y > 0 ? 1 : -1)));
+                }
+                dragTile = null;
+                dragStart = Vector3.zero;
+            } else {
+                Debug.Log("Dragging, distance=" + diff.sqrMagnitude);
+            }
+        }
+    }
 
     /// <summary>
     /// Creates a new tile above the board.  x,y defines where it should
