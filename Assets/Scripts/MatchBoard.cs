@@ -257,4 +257,10 @@ public class MatchBoard : MonoBehaviour {
         }
         return new Tile[] { square1, square2, square3 };
     }
+
+    public void OnDrawGizmos() {
+        Gizmos.color = Color.green;
+        Gizmos.DrawWireCube(new Vector3(boardSize/2, boardSize/2, 0),
+            new Vector3(boardSize, boardSize, .1f));
+    }
 }

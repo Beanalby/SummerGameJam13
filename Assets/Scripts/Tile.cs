@@ -1,7 +1,7 @@
 using UnityEngine;
 using System.Collections;
 
-public enum SquareType { None, Robot, Human, Religious, Science, Freedom, Law, Score, Time };
+public enum SquareType { None, Freedom, Human, Law, Religious, Robot, Science, Score, Time };
 
 public class Tile : MonoBehaviour {
 
@@ -10,6 +10,7 @@ public class Tile : MonoBehaviour {
     public SquareType type;
 
     public Color[] colors;
+    public Texture[] textures;
 
     MatchBoard board;
 
@@ -30,7 +31,8 @@ public class Tile : MonoBehaviour {
 
         UpdateName();
         Material mat = GetComponentInChildren<MeshRenderer>().material;
-        mat.color = colors[(int)type - 1];
+        //mat.color = colors[(int)type - 1];
+        mat.mainTexture = textures[(int)type - 1];
 	}
 	
 	// Update is called once per frame
