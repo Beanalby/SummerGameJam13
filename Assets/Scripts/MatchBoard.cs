@@ -40,7 +40,16 @@ public class MatchBoard : MonoBehaviour {
             }
         }
         if (Input.GetKeyDown(KeyCode.Space)) {
-            TestForMatch(current);
+            HashSet<MatchSquare> matches = GetMatches(current);
+            if (matches.Count != 0) {
+                string msg = "+++ Got matches: ";
+                foreach (MatchSquare sq in matches) {
+                    msg += sq.name + " (" + sq.posX + "," + sq.posY + ") ";
+                }
+                Debug.Log(msg);
+            } else {
+                Debug.Log("No matches :(");
+            }
         }
 	}
 
@@ -52,30 +61,33 @@ public class MatchBoard : MonoBehaviour {
 
     }
 
-    void TestForMatch(MatchSquare square) {
+    HashSet<MatchSquare> GetMatches(MatchSquare square) {
+        HashSet<MatchSquare> matches = new HashSet<MatchSquare>();
         int x = square.posX;
         int y = square.posY;
         Debug.Log("+++ Testing " + square.name + " (" + x + "," + y + ") for matches");
         if (x > 1)
-            TestSameType(square, squares[x - 2, y], squares[x - 1, y]);
+            matches.UnionWith(TestMatch(square, squares[x - 2, y], squares[x - 1, y]));
         if(x > 0 && x < boardSize-1)
-            TestSameType(square, squares[x - 1, y], squares[x + 1, y]);
-        if(x < boardSize-2)
-            TestSameType(square, squares[x + 2, y], squares[x + 1, y]);
+            matches.UnionWith(TestMatch(square, squares[x - 1, y], squares[x + 1, y]));
+        if (x < boardSize - 2)
+            matches.UnionWith(TestMatch(square, squares[x + 2, y], squares[x + 1, y]));
 
         if (y > 1)
-            TestSameType(square, squares[x, y - 2], squares[x, y - 1]);
+            matches.UnionWith(TestMatch(square, squares[x, y - 2], squares[x, y - 1]));
         if(y > 0 && y < boardSize-1)
-            TestSameType(square, squares[x, y - 1], squares[x, y + 1]);
+            matches.UnionWith(TestMatch(square, squares[x, y - 1], squares[x, y + 1]));
         if(y < boardSize-2)
-            TestSameType(square, squares[x, y + 2], squares[x, y + 1]);
+            matches.UnionWith(TestMatch(square, squares[x, y + 2], squares[x, y + 1]));
+
+        return matches;
     }
 
-    bool TestSameType(MatchSquare square1, MatchSquare square2, MatchSquare square3) {
+    MatchSquare[] TestMatch(MatchSquare square1, MatchSquare square2, MatchSquare square3) {
         if (square1.type == square2.type && square1.type == square3.type) {
-            ApplyMatch(square1, square2, square3);
-            return true;
+            return new MatchSquare[] { square1, square2, square3 };
+        } else {
+            return new MatchSquare[0];
         }
-        return false;
     }
 }
