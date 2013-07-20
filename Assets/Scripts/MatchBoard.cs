@@ -37,72 +37,99 @@ public class Position
 
 public class MatchBoard : MonoBehaviour {
 
-    public MatchSquare SquarePrefab;
+    public Tile SquarePrefab;
     const int boardSize = 7;
 
-    public MatchSquare[,] squares;
+    public Tile[,] board = null;
     private int squareMask;
 
-    MatchSquare current = null;
+    Tile selected = null;
 
 	// Use this for initialization
 	void Start () {
-        squares = new MatchSquare[boardSize,boardSize];
-        for (int i = 0; i < boardSize; i++) {
-            for (int j = 0; j < boardSize; j++) {
-                GameObject obj = Instantiate(SquarePrefab.gameObject) as GameObject;
-                obj.transform.parent = transform;
-                obj.transform.position = new Vector3(i, j, 0);
-                squares[i,j] = obj.GetComponent<MatchSquare>();
+        InitBoard();
+	}
+
+    void InitBoard() {
+        Debug.Log("InitBoard start: " + System.DateTime.Now.ToString("ss.ffffff"));
+        Random.seed = 123;
+        board = new Tile[boardSize,boardSize];
+        for (int x = 0; x < boardSize; x++) {
+            for (int y = 0; y < boardSize; y++) {
+                CreateTile(x, y, y);
             }
         }
         squareMask = 1 << LayerMask.NameToLayer("Square");
-	}
+        Debug.Log("InitBoard end: " + System.DateTime.Now.ToString("ss.ffffff"));
+        Debug.Log("=======================");
+    }
 
     // Update is called once per frame
     void Update() {
+        HashSet<Tile> matches = GetAllMatches();
+        if (matches.Count != 0) {
+            HandleMatches(matches);
+        }
         if (Input.GetMouseButtonDown(0)) {
             Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
             RaycastHit hit;
             if (Physics.Raycast(ray, out hit, Mathf.Infinity, squareMask)) {
-                Debug.Log("I hit " + hit.collider.name + " at " + hit.transform.position);
-                current = hit.collider.GetComponent<MatchSquare>();
-            }
-        }
-        if (Input.GetKeyDown(KeyCode.Space)) {
-            HashSet<MatchSquare> matches = GetMatches(current);
-            if (matches.Count != 0) {
-                string msg = "+++ Got matches: ";
-                foreach (MatchSquare sq in matches) {
-                    msg += sq.name + " ";
-                }
-                Debug.Log(msg);
-            } else {
-                Debug.Log("No matches :(");
+                selected = hit.collider.GetComponent<Tile>();
             }
         }
         if (Input.GetKeyDown(KeyCode.S)) {
-            StartCoroutine(MoveSquare(current, new Position(0, -1)));
+            StartCoroutine(SwapTile(selected, new Position(0, -1)));
         }
         if (Input.GetKeyDown(KeyCode.W)) {
-            StartCoroutine(MoveSquare(current, new Position(0, 1)));
+            StartCoroutine(SwapTile(selected, new Position(0, 1)));
         }
         if (Input.GetKeyDown(KeyCode.A)) {
-            StartCoroutine(MoveSquare(current, new Position(-1, 0)));
+            StartCoroutine(SwapTile(selected, new Position(-1, 0)));
         }
         if (Input.GetKeyDown(KeyCode.D)) {
-            StartCoroutine(MoveSquare(current, new Position(1, 0)));
+            StartCoroutine(SwapTile(selected, new Position(1, 0)));
         }
 	}
 
-    IEnumerator MoveSquare(MatchSquare square, Position delta) {
+    /// <summary>
+    /// Creates a new tile above the board.  x,y defines where it should
+    /// eventually be, offset defines now high up the tile should start.
+    /// </summary>
+    private Tile CreateTile(int x, int y, int offset) {
+        //Debug.Log("------------------------");
+        //Debug.Log("CreateTile for (" + x + "," + y + "), offset=" + offset);
+        //Debug.Log("CreateTile instantiating: " + System.DateTime.Now.ToString("ss.ffffff"));
+        GameObject obj = Instantiate(SquarePrefab.gameObject) as GameObject;
+        //Debug.Log("CreateTile instantiated: " + System.DateTime.Now.ToString("ss.ffffff"));
+        obj.transform.parent = transform;
+        obj.transform.position = new Vector3(x, boardSize + offset, 0);
+        Tile tile = obj.GetComponent<Tile>();
+        // tile normally as to travel full board size.  Distance is
+        // lessened when its position is higher, increased by offset.
+        int distance = boardSize - y + offset;
+        //Debug.Log("CreateTile calling MoveTile: " + System.DateTime.Now.ToString("ss.ffffff"));
+        MoveTile(tile, new Position(x, boardSize+offset),
+            new Position(0, -distance));
+        //Debug.Log("CreateTile returning: " + System.DateTime.Now.ToString("ss.ffffff"));
+        return tile;
+    }
+
+    /// <summary>
+    /// Attempts to swap a tile in the given direction.  Makes sure
+    /// it's not off the board, finds the appropriate other tile and
+    /// moves it too, moves it back if it isn't a match, etc.
+    /// </summary>
+    /// <param name="current"></param>
+    /// <param name="delta"></param>
+    /// <returns></returns>
+    IEnumerator SwapTile(Tile current, Position delta) {
         Position currentPos = GetPosition(current);
         Position otherPos = currentPos + delta;
         if(otherPos.x < 0 || otherPos.x >= boardSize
                 || otherPos.y < 0 || otherPos.y >= boardSize) {
             yield break; // trying to moving outside board
         }
-        MatchSquare other = squares[otherPos.x, otherPos.y];
+        Tile other = board[otherPos.x, otherPos.y];
         if (other == null) {
             yield break; // matched gap that hasn't filled yet
         }
@@ -110,60 +137,107 @@ public class MatchBoard : MonoBehaviour {
             yield break; // currently moving or falling
         }
 
-        current.MoveBy(delta, false);
-        other.MoveBy(delta.GetOpposite(), true);
+        MoveTile(current, currentPos, delta);
+        MoveTile(other, otherPos, delta.GetOpposite());
         while (current.IsBusy || other.IsBusy) {
             yield return 0;
         }
-        //yield return new WaitForSeconds(MatchSquare.moveDuration);
 
-        // update their positions in our board
-        squares[otherPos.x, otherPos.y] = current;
-        current.UpdateName();
-        squares[currentPos.x, currentPos.y] = other;
-        other.UpdateName();
-        
-        // WTF TODO test for matches
+        // get the list of squares involved in a match by swapping those
+        HashSet<Tile> matches = GetAllMatches();
+        if (matches.Count == 0) {
+            // didn't work, move the squares back
+            MoveTile(current, currentPos+delta, delta.GetOpposite());
+            MoveTile(other, otherPos-delta, delta);
+            yield break;
+        } else {
+            HandleMatches(matches);
+        }
     }
 
-    void ApplyMatch(MatchSquare square1, MatchSquare square2, MatchSquare square3) {
-        Debug.Log("Got Match betwen " +
-            square1.name + ", " +
-            square2.name + ", " +
-            square3.name + "!");
-
+    /// <summary>
+    /// Internal funciton to invoke the actual movement of a tile.
+    /// Assumes position is valid, tile exists, etc.
+    /// Used by SwapTile & refillBoard
+    /// </summary>
+    private void MoveTile(Tile tile, Position from, Position delta) {
+        //Debug.Log("Moving " + tile.name + " from " + from + " by " + delta);
+        tile.MoveBy(from, delta, false);
+        Position target = from + delta;
+        //Debug.Log("Setting board @ " + target.x + "," + target.y);
+        board[target.x, target.y] = tile;
+        tile.UpdateName(target);
     }
 
-    HashSet<MatchSquare> GetMatches(MatchSquare square) {
-        HashSet<MatchSquare> matches = new HashSet<MatchSquare>();
-        Position pos = GetPosition(square);
-        int x = pos.x, y = pos.y;
+    void HandleMatches(HashSet<Tile> matches) {
+        Debug.Log("HandleMatches start: " + System.DateTime.Now.ToString("ss.ffffff"));
+        foreach (Tile tile in matches) {
+            // TODO do stuff for matches
+            Position pos = GetPosition(tile);
+            board[pos.x, pos.y] = null;
+            tile.Matched();
+        }
+        RefillBoard();
+        Debug.Log("HandleMatches end: " + System.DateTime.Now.ToString("ss.ffffff"));
+    }
 
-        Debug.Log("+++ Testing " + square.name + " (" + x + "," + y + ") for matches");
-        if (x > 1)
-            matches.UnionWith(TestMatch(square, squares[x - 2, y], squares[x - 1, y]));
-        if(x > 0 && x < boardSize-1)
-            matches.UnionWith(TestMatch(square, squares[x - 1, y], squares[x + 1, y]));
-        if (x < boardSize - 2)
-            matches.UnionWith(TestMatch(square, squares[x + 2, y], squares[x + 1, y]));
+    void RefillBoard() {
+        // for each of the columns, figure out what needs to be moved/made
+        for (int x = 0; x < boardSize; x++) {
+            int numHoles = 0;
+            // from the bottom up, move things down as needed
+            // the number of gaps we see drives the number
+            // of tiles we make from the top
+            for (int y = 0; y < boardSize; y++) {
+                Tile tile = board[x,y];
+                if (tile == null) {
+                    numHoles++;
+                    //Debug.Log("Noting hole at " + x + "," + y);
+                } else {
+                    if (numHoles != 0) {
+                        MoveTile(tile, new Position(x, y),
+                            new Position(0, -numHoles));
+                    }
+                }
+            }
+            // if we found any holes, create new tiles at the top
+            for (int i = 0; i < numHoles; i++) {
+                // create the tile off the top of the board and let
+                // it fall down.  Additional tiles for multiple holes
+                // start higher & higher
+                //Debug.Log("Filling hole #" + i + "/" + numHoles);
+                int targetY = boardSize - numHoles + i;
+                CreateTile(x, targetY, i);
+            }
+        }
+    }
 
-        if (y > 1)
-            matches.UnionWith(TestMatch(square, squares[x, y - 2], squares[x, y - 1]));
-        if(y > 0 && y < boardSize-1)
-            matches.UnionWith(TestMatch(square, squares[x, y - 1], squares[x, y + 1]));
-        if(y < boardSize-2)
-            matches.UnionWith(TestMatch(square, squares[x, y + 2], squares[x, y + 1]));
+    HashSet<Tile> GetAllMatches() {
+        // returns any possible matches on the board
+        HashSet<Tile> matches = new HashSet<Tile>();
 
+        for (int x = 0; x < boardSize; x++) {
+            for (int y = 0; y < boardSize; y++) {
+                if(x < boardSize - 2) {
+                    matches.UnionWith(TestMatch(
+                        board[x,y], board[x+1,y], board[x+2,y]));
+                }
+                if (y < boardSize - 2) {
+                    matches.UnionWith(TestMatch(
+                        board[x,y], board[x,y+1], board[x,y+2]));
+                }
+            }
+        }
         return matches;
     }
 
     /// <summary>
     /// Returns the current board position of a given square
     /// </summary>
-    public Position GetPosition(MatchSquare square) {
+    public Position GetPosition(Tile square) {
         for (int i = 0; i < boardSize; i++) {
             for (int j = 0; j < boardSize; j++) {
-                if (squares[i, j] == square) {
+                if (board[i, j] == square) {
                     return new Position(i, j);
                 }
             }
@@ -171,17 +245,16 @@ public class MatchBoard : MonoBehaviour {
         Debug.LogError("Couldn't find position for " + square.name);
         return new Position(-1, -1);
     }
-
-   MatchSquare[] TestMatch(MatchSquare square1, MatchSquare square2, MatchSquare square3) {
-       if (square1 == null || square2 == null || square3 == null) {
-           return new MatchSquare[0];
-       }
-       if (square1.IsBusy || square2.IsBusy || square3.IsBusy) {
-           return new MatchSquare[0];
-       }
-       if (square1.type != square2.type || square1.type != square3.type) {
-           return new MatchSquare[0];
-       }
-       return new MatchSquare[] { square1, square2, square3 };
+    Tile[] TestMatch(Tile square1, Tile square2, Tile square3) {
+        if (square1 == null || square2 == null || square3 == null) {
+            return new Tile[0];
+        }
+        if (square1.IsBusy || square2.IsBusy || square3.IsBusy) {
+            return new Tile[0];
+        }
+        if (square1.type != square2.type || square1.type != square3.type) {
+            return new Tile[0];
+        }
+        return new Tile[] { square1, square2, square3 };
     }
 }
