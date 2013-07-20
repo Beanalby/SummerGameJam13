@@ -77,6 +77,21 @@ public class MatchBoard : MonoBehaviour {
                 selected = hit.collider.GetComponent<Tile>();
             }
         }
+        if (Input.GetKeyDown(KeyCode.Space)) {
+            //if (HasPotentialMatch()) {
+            //    Debug.Log("There's a match!");
+            //} else {
+            //    Debug.Log("no match :(");
+            //}
+            List<Position> newMove = FindMatch();
+            if (newMove == null) {
+                Debug.Log("No move :(");
+            } else {
+                StartCoroutine(SwapTile(
+                    board[newMove[0].x, newMove[0].y], newMove[1]));
+            }
+
+        }
         if (Input.GetKeyDown(KeyCode.S)) {
             StartCoroutine(SwapTile(selected, new Position(0, -1)));
         }
@@ -219,16 +234,194 @@ public class MatchBoard : MonoBehaviour {
         for (int x = 0; x < boardSize; x++) {
             for (int y = 0; y < boardSize; y++) {
                 if(x < boardSize - 2) {
-                    matches.UnionWith(TestMatch(
+                    matches.UnionWith(GetMatch(
                         board[x,y], board[x+1,y], board[x+2,y]));
                 }
                 if (y < boardSize - 2) {
-                    matches.UnionWith(TestMatch(
+                    matches.UnionWith(GetMatch(
                         board[x,y], board[x,y+1], board[x,y+2]));
                 }
             }
         }
         return matches;
+    }
+
+    Tile[] GetMatch(Tile square1, Tile square2, Tile square3) {
+        if (IsMatch(square1, square2, square3)) {
+            return new Tile[] { square1, square2, square3 };
+        } else {
+            return new Tile[0];
+        }
+    }
+    bool IsMatch(Tile square1, Tile square2, Tile square3) {
+        if (square1 == null || square2 == null || square3 == null) {
+            return false;
+        }
+        if (square1.IsBusy || square2.IsBusy || square3.IsBusy) {
+            return false;
+        }
+        if (square1.type != square2.type || square1.type != square3.type) {
+            return false;
+        }
+        Debug.Log("IsMatch true for " + square1 + ", " + square2 + ", " + square3);
+        return true;
+    }
+
+    List<Position> FindMatch() {
+        // returns true if it's possible to make a match through a swap
+        
+        // for any given position, we look for any of the following
+        for (int x = 0; x < boardSize; x++) {
+            for (int y = 0; y < boardSize; y++) {
+                // we check for a number of potential positions, where
+                // X is the current postion, x is a tile we'll be checking
+                // for the same type, and . is a tile that doesn't matter
+                Tile tile = board[x,y];
+
+                int max = boardSize - 1;
+                // -------------------------------------
+                // horizontal match, tile on right joins
+                // xx.X
+                if (x >= 3)
+                    if (IsMatch(tile, board[x - 2, y], board[x - 3, y]))
+                        return new List<Position>() {
+                            new Position(x,y),
+                            new Position(-1,0) };
+                // ..X
+                // xx.
+                if (x >= 2 && y >= 1)
+                    if (IsMatch(tile, board[x - 1, y - 1], board[x - 2, y - 1]))
+                        return new List<Position>() {
+                            new Position(x,y),
+                            new Position(0, -1) };
+                // xx.
+                // ..X
+                if (x >= 2 && y <= max - 1)
+                    if (IsMatch(tile, board[x - 1, y + 1], board[x - 2, y + 1]))
+                        return new List<Position>() {
+                            new Position(x,y),
+                            new Position(0,1) };
+
+                // -------------------------------------
+                // horizontal match, tile on left joins
+                // X.xx
+                if (x <= max-3)
+                    if (IsMatch(tile, board[x + 2, y], board[x + 3, y]))
+                        return new List<Position>() {
+                            new Position(x,y),
+                            new Position(1,0) };
+                // X..
+                // .xx
+                if (x <= max - 2 && y >= 1)
+                    if (IsMatch(tile, board[x + 1, y - 1], board[x + 2, y - 1]))
+                        return new List<Position>() {
+                            new Position(x,y),
+                            new Position(0,-1) };
+                // .xx
+                // X..
+                if (x <= max - 2 && y <= max - 1)
+                    if (IsMatch(tile, board[x + 1, y + 1], board[x + 2, y + 1]))
+                        return new List<Position>() {
+                            new Position(x,y),
+                            new Position(0,1) };
+
+                // -------------------------------------
+                // horizontal match, tile in middle joins
+                // .X.
+                // x.x
+                if (x >= 1 && x <= max - 1 && y >= 1)
+                    if (IsMatch(tile, board[x - 1, y - 1], board[x + 1, y - 1]))
+                        return new List<Position>() {
+                            new Position(x,y),
+                            new Position(0,-1) };
+                // x.x
+                // .X.
+                if (x >= 1 && x <= max - 1 && y <= max - 1)
+                    if (IsMatch(tile, board[x - 1, y + 1], board[x + 1, y + 1]))
+                        return new List<Position>() {
+                            new Position(x,y),
+                            new Position(0,1) };
+
+                // -------------------------------------
+                // vertical match, tile on top joins
+                // X
+                // .
+                // x
+                // x
+                if (y >= 3)
+                    if (IsMatch(tile, board[x, y - 2], board[x, y - 3]))
+                        return new List<Position>() {
+                            new Position(x,y),
+                            new Position(0,-1) };
+                // X.
+                // .x
+                // .x
+                if (x <= max - 1 && y >= 2)
+                    if (IsMatch(tile, board[x + 1, y - 1], board[x + 1, y - 2]))
+                        return new List<Position>() {
+                            new Position(x,y),
+                            new Position(1,0) };
+                // .X
+                // x.
+                // x.
+                if (x >= 1 && y >= 2)
+                    if (IsMatch(tile, board[x - 1, y - 1], board[x - 1, y - 2]))
+                        return new List<Position>() {
+                            new Position(x,y),
+                            new Position(-1,0) };
+                // -------------------------------------
+                // vertical match, tile on bottom joins
+                // x
+                // x
+                // .
+                // X
+                if (y <= max - 3)
+                    if (IsMatch(tile, board[x, y + 2], board[x, y + 3]))
+                        return new List<Position>() {
+                            new Position(x,y),
+                            new Position(0,1) };
+                // .x
+                // .x
+                // X.
+                if (x <= max - 1 && y <= max - 2)
+                    if (IsMatch(tile, board[x + 1, y + 1], board[x + 1, y + 2]))
+                        return new List<Position>() {
+                            new Position(x,y),
+                            new Position(1,0) };
+                // x.
+                // x.
+                // .X
+                if (x >= 1 && y <= max - 2)
+                    if (IsMatch(tile, board[x - 1, y + 1], board[x - 1, y + 2]))
+                        return new List<Position>() {
+                            new Position(x,y),
+                            new Position(-1,0) };
+
+                // -------------------------------------
+                // vertical match, tile in middle joins
+                // x.
+                // .X
+                // x.
+                if (x >= 1 && y >= 1 && y <= max - 1)
+                    if (IsMatch(tile, board[x - 1, y - 1], board[x - 1, y + 1]))
+                        return new List<Position>() {
+                            new Position(x,y),
+                            new Position(-1,0) };
+                // .x
+                // X.
+                // .x
+                if (x <= max - 1 && y >= 1 && y <= max - 1)
+                    if (IsMatch(tile, board[x + 1, y - 1], board[x + 1, y + 1]))
+                        return new List<Position>() {
+                            new Position(x,y),
+                            new Position(1,0) };
+            }
+        }
+
+        return null;
+    }
+    bool HasPotentialMatch() {
+        return FindMatch() != null;
     }
 
     /// <summary>
@@ -244,18 +437,6 @@ public class MatchBoard : MonoBehaviour {
         }
         Debug.LogError("Couldn't find position for " + square.name);
         return new Position(-1, -1);
-    }
-    Tile[] TestMatch(Tile square1, Tile square2, Tile square3) {
-        if (square1 == null || square2 == null || square3 == null) {
-            return new Tile[0];
-        }
-        if (square1.IsBusy || square2.IsBusy || square3.IsBusy) {
-            return new Tile[0];
-        }
-        if (square1.type != square2.type || square1.type != square3.type) {
-            return new Tile[0];
-        }
-        return new Tile[] { square1, square2, square3 };
     }
 
     public void OnDrawGizmos() {

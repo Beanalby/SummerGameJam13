@@ -1,13 +1,13 @@
 using UnityEngine;
 using System.Collections;
 
-public enum SquareType { None, Freedom, Human, Law, Religious, Robot, Science, Score, Time };
+public enum TileType { None, Freedom, Human, Law, Religious, Robot, Science, Score, Time };
 
 public class Tile : MonoBehaviour {
 
     public const float moveDuration = .5f;
 
-    public SquareType type;
+    public TileType type;
 
     public Color[] colors;
     public Texture[] textures;
@@ -26,8 +26,8 @@ public class Tile : MonoBehaviour {
         board = GameObject.Find("Board").GetComponent<MatchBoard>();
         ease = Interpolate.Ease(Interpolate.EaseType.EaseInCubic);
         // choose a random square type
-        System.Array types = System.Enum.GetValues(typeof(SquareType));
-        type = (SquareType)types.GetValue(Random.Range(1, types.Length));
+        System.Array types = System.Enum.GetValues(typeof(TileType));
+        type = (TileType)types.GetValue(Random.Range(1, types.Length));
 
         UpdateName();
         Material mat = GetComponentInChildren<MeshRenderer>().material;
