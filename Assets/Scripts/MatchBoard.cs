@@ -38,22 +38,28 @@ public class Position
 public class MatchBoard : MonoBehaviour {
 
     public Tile SquarePrefab;
-    const int boardSize = 7;
+    const int boardSize = 9;
 
     public Tile[,] board = null;
     private int squareMask;
 
-    private float dragThreshold = 1000;
+    private float dragThreshold = 700;
     Vector3 dragStart = Vector3.zero;
     Tile dragTile = null;
+    TileType draggedType = TileType.None;
+
+    private GameDriver driver;
+    private GameObject selection;
 
 	// Use this for initialization
 	void Start () {
+        driver = GameObject.Find("GameDriver").GetComponent<GameDriver>();
+        selection = transform.FindChild("Selection").gameObject;
+        selection.SetActive(false);
         InitBoard();
 	}
 
     void InitBoard() {
-        Debug.Log("InitBoard start: " + System.DateTime.Now.ToString("ss.ffffff"));
         Random.seed = 123;
         board = new Tile[boardSize,boardSize];
         for (int x = 0; x < boardSize; x++) {
@@ -62,8 +68,6 @@ public class MatchBoard : MonoBehaviour {
             }
         }
         squareMask = 1 << LayerMask.NameToLayer("Square");
-        Debug.Log("InitBoard end: " + System.DateTime.Now.ToString("ss.ffffff"));
-        Debug.Log("=======================");
     }
 
     // Update is called once per frame
@@ -82,7 +86,6 @@ public class MatchBoard : MonoBehaviour {
                 StartCoroutine(SwapTile(
                     board[newMove[0].x, newMove[0].y], newMove[1]));
             }
-
         }
 	}
 
@@ -93,10 +96,15 @@ public class MatchBoard : MonoBehaviour {
             if (Physics.Raycast(ray, out hit, Mathf.Infinity, squareMask)) {
                 dragTile = hit.collider.GetComponent<Tile>();
                 dragStart = Input.mousePosition;
+                selection.transform.parent = dragTile.transform;
+                selection.transform.localPosition = Vector3.zero;
+                selection.SetActive(true);
             }
         }
         if (Input.GetMouseButtonUp(0) && dragTile != null) {
             dragTile = null;
+            selection.transform.parent = transform;
+            selection.SetActive(false);
             dragStart = Vector3.zero;
         }
         if (dragTile != null) {
@@ -110,10 +118,9 @@ public class MatchBoard : MonoBehaviour {
                     StartCoroutine(SwapTile(dragTile,
                         new Position(0, diff.y > 0 ? 1 : -1)));
                 }
+                draggedType = dragTile.type;
                 dragTile = null;
                 dragStart = Vector3.zero;
-            } else {
-                Debug.Log("Dragging, distance=" + diff.sqrMagnitude);
             }
         }
     }
@@ -170,6 +177,8 @@ public class MatchBoard : MonoBehaviour {
             yield return 0;
         }
 
+        selection.transform.parent = transform;
+        selection.SetActive(false);
         // get the list of squares involved in a match by swapping those
         HashSet<Tile> matches = GetAllMatches();
         if (matches.Count == 0) {
@@ -197,15 +206,22 @@ public class MatchBoard : MonoBehaviour {
     }
 
     void HandleMatches(HashSet<Tile> matches) {
-        Debug.Log("HandleMatches start: " + System.DateTime.Now.ToString("ss.ffffff"));
+        Dictionary<TileType, int> score = new Dictionary<TileType,int>();
         foreach (Tile tile in matches) {
-            // TODO do stuff for matches
+            int amount = (tile.type == draggedType ? 4 : 1);
+            if (score.ContainsKey(tile.type)) {
+                score[tile.type] += amount;
+            } else {
+                score[tile.type] = amount;
+            }
             Position pos = GetPosition(tile);
             board[pos.x, pos.y] = null;
             tile.Matched();
         }
+        foreach (TileType type in score.Keys) {
+            driver.AddStats(type, score[type]);
+        }
         RefillBoard();
-        Debug.Log("HandleMatches end: " + System.DateTime.Now.ToString("ss.ffffff"));
     }
 
     void RefillBoard() {
@@ -275,7 +291,6 @@ public class MatchBoard : MonoBehaviour {
         if (square1.type != square2.type || square1.type != square3.type) {
             return false;
         }
-        Debug.Log("IsMatch true for " + square1 + ", " + square2 + ", " + square3);
         return true;
     }
 

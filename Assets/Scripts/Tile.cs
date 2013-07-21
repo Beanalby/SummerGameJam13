@@ -24,7 +24,7 @@ public class Tile : MonoBehaviour {
 
 	void Start () {
         board = GameObject.Find("Board").GetComponent<MatchBoard>();
-        ease = Interpolate.Ease(Interpolate.EaseType.EaseInCubic);
+        ease = Interpolate.Ease(Interpolate.EaseType.EaseOutCubic);
         // choose a random square type
         System.Array types = System.Enum.GetValues(typeof(TileType));
         type = (TileType)types.GetValue(Random.Range(1, types.Length));
