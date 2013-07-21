@@ -18,7 +18,7 @@ public class GameState : MonoBehaviour {
         }
     }
 
-    public int targetScore = 50;
+    public int targetScore = 1;
 
     public bool isRobotEnemy = false;
     public bool isReligionEnemy = false;
@@ -62,9 +62,9 @@ public class GameState : MonoBehaviour {
             name = "Pro-human " + name;
         }
         if (isReligion) {
-            name = name + "Scientific ";
-        } else {
             name = name + "Religious ";
+        } else {
+            name = name + "Scientific ";
         }
         if (isLaw) {
             name = name + "Anarchist";
