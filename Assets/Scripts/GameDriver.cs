@@ -13,7 +13,6 @@ public class GameDriver : MonoBehaviour {
 
     int score;
     float gameStart;
-    float gameDuration = 60;
     private float timeElapsed, timeLeft = 60;
 
     public bool hideEndgame = false;
@@ -39,7 +38,9 @@ public class GameDriver : MonoBehaviour {
     public void Start() {
         gameState = GameState.instance;
         score = 0;
-        levelLaw = levelRobot = levelReligion = 50;
+        levelLaw = Random.Range(48,53);
+        levelRobot = Random.Range(48,53);
+        levelReligion = Random.Range(48,53);
         dudes = dudeFactory.MakeDudes(Screen.width - boardWidth, Screen.width, 0, 6,
             gameState.isRobotEnemy, gameState.isReligionEnemy, gameState.isLawEnemy);
         targetStyle = new GUIStyle(skin.label);
@@ -219,7 +220,7 @@ public class GameDriver : MonoBehaviour {
 
     void UpdateTime() {
         timeElapsed = Time.time - gameStart;
-        timeLeft = Mathf.Max(0, gameDuration - timeElapsed);
+        timeLeft = Mathf.Max(0, gameState.gameDuration - timeElapsed);
         if(timeLeft <= 0 && board.isPlaying) {
             board.isPlaying = false;
         }
