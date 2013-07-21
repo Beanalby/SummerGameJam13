@@ -1,5 +1,6 @@
 using UnityEngine;
 using System.Collections;
+using System.Collections.Generic;
 
 public class GameDriver : MonoBehaviour {
 
@@ -12,7 +13,7 @@ public class GameDriver : MonoBehaviour {
 
     int score;
     float gameStart;
-    float gameDuration = 5;
+    float gameDuration = 60;
     private float timeElapsed, timeLeft = 60;
 
     public bool hideEndgame = false;
@@ -33,13 +34,15 @@ public class GameDriver : MonoBehaviour {
     private GameState gameState;
     private MatchBoard board;
 
+    public DudeFactory dudeFactory;
+    private List<Dude> dudes;
+
     public void Start() {
+        gameState = GameState.instance;
         score = 0;
         levelLaw = levelRobot = levelReligion = 50;
-        dudeRect = new Rect(Screen.width - boardWidth, 0,
-            boardWidth, dudeHeight);
-
-
+        dudes = dudeFactory.MakeDudes(Screen.width - boardWidth, Screen.width, 0, 6,
+            gameState.isRobotEnemy, gameState.isReligionEnemy, gameState.isLawEnemy);
         targetStyle = new GUIStyle(skin.label);
         targetStyle.alignment = TextAnchor.UpperRight;
 
@@ -71,7 +74,6 @@ public class GameDriver : MonoBehaviour {
             Screen.height - levelHeight * 3);
 
         board = GameObject.Find("Board").GetComponent<MatchBoard>();
-        gameState = GameState.instance;
         StartGame();
     }
     public void OnGUI() {
