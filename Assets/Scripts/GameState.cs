@@ -3,33 +3,80 @@ using System.Collections;
 
 public class GameState : MonoBehaviour {
 
-    public static GameState instance;
+    private static GameState _instance;
+    public static GameState instance {
+        get {
+            if(_instance == null) {
+                GameObject obj = new GameObject();
+                GameState state = obj.AddComponent<GameState>();
+                _instance = state;
+                _instance.isRobotEnemy = Random.Range(0f, 1f) < .5f;
+                _instance.isReligionEnemy = Random.Range(0f, 1f) < .5f;
+                _instance.isLawEnemy = Random.Range(0f, 1f) < .5f;
+            }
+            return _instance;
+        }
+    }
 
-    public float targetScore = 1;
+    public int targetScore = 50;
 
-    public bool isRobot;
-    public bool isReligion;
-    public bool isLaw;
+    public bool isRobotEnemy = false;
+    public bool isReligionEnemy = false;
+    public bool isLawEnemy = false;
 
-    public bool isRobotPlayer;
-    public bool isReligionPlayer;
-    public bool isLawPlayer;
+    public bool isRobotPlayer = false;
+    public bool isReligionPlayer = false;
+    public bool isLawPlayer = false;
 
     public void Start() {
-        if(instance != null) {
+        if(_instance != null && _instance != this) {
             Destroy(gameObject);
         }
-        instance = this;
 
         GameObject.DontDestroyOnLoad(gameObject);
     }
-
     public void RestartEasier() {
         targetScore /= 2;
-        Application.LoadLevel("game");
+        Application.LoadLevel("intro");
     }
 
-    public void Transition() {
+    public void Restart() {
+        isRobotEnemy = isRobotPlayer;
+        isReligionEnemy = isReligionPlayer;
+        isLawEnemy = isLawPlayer;
+        targetScore = (int)(targetScore * 1.5);
+        Application.LoadLevel("intro");
+    }
+    public void Transition(bool isRobotNew, bool isReligionNew, bool isLawNew) {
+        isRobotPlayer = isRobotNew;
+        isReligionPlayer = isReligionNew;
+        isLawPlayer = isLawNew;
         Application.LoadLevel("transition");
+    }
+
+    public string Flags2name(bool isRobot, bool isReligion, bool isLaw) {
+        string name = "";
+        if (isRobot) {
+            name = "Robotic " + name;
+        } else {
+            name = "Pro-human " + name;
+        }
+        if (isReligion) {
+            name = name + "Scientific ";
+        } else {
+            name = name + "Religious ";
+        }
+        if (isLaw) {
+            name = name + "Anarchist";
+        } else {
+            name = name + "Police State";
+        }
+        return name;
+    }
+    public string GetPlayerName() {
+        return Flags2name(isRobotPlayer, isReligionPlayer, isLawPlayer);
+    }
+    public string GetEnemyName() {
+        return Flags2name(isRobotEnemy, isReligionEnemy, isLawEnemy);
     }
 }

@@ -13,8 +13,9 @@ public class GameDriver : MonoBehaviour {
     int score;
     float gameStart;
     float gameDuration = 5;
-    private float timeElapsed, timeLeft;
+    private float timeElapsed, timeLeft = 60;
 
+    public bool hideEndgame = false;
     float levelLaw;
     float levelRobot;
     float levelReligion;
@@ -70,15 +71,19 @@ public class GameDriver : MonoBehaviour {
             Screen.height - levelHeight * 3);
 
         board = GameObject.Find("Board").GetComponent<MatchBoard>();
-        gameState = GameObject.Find("GameState").GetComponent<GameState>();
+        gameState = GameState.instance;
         StartGame();
     }
     public void OnGUI() {
         GUI.skin = skin;
-        GUI.Box(dudeRect, "Dude");
+        DrawDude();
         DrawLevels();
         DrawScore();
         DrawEndGame();
+    }
+
+    public void DrawDude() {
+        GUI.Box(dudeRect, gameState.GetEnemyName());
     }
 
     public void DrawLevels() {
@@ -135,9 +140,10 @@ public class GameDriver : MonoBehaviour {
     }
 
     public void DrawEndGame() {
-        if(timeLeft > 0) {
+        if(timeLeft > 0 || hideEndgame) {
             return;
         }
+        //Debug.Log("endGame: timeLeft=" + timeLeft + ", score=" + score + ", target=" + gameState.targetScore);
         int buttonWidth = 400, buttonHeight = 50;
         Rect endGameRect = new Rect(Screen.width * .1f, Screen.height * .25f,
             Screen.width * .8f, Screen.height * .5f);
@@ -154,7 +160,9 @@ public class GameDriver : MonoBehaviour {
             if(GUI.Button(new Rect(endGameRect.width / 2 - buttonWidth / 2,
                     endGameRect.height * .75f, buttonWidth, buttonHeight),
                     "Overthrow Government")) {
-                gameState.Transition();
+                gameState.Transition(levelRobot > 50, levelReligion > 50,
+                    levelLaw > 50);
+                hideEndgame = true;
             }
         } else {
             GUI.Label(new Rect(0, 0, endGameRect.width, endGameRect.height),
@@ -164,6 +172,7 @@ public class GameDriver : MonoBehaviour {
                     endGameRect.height * .75f, buttonWidth, buttonHeight),
                     "Fight On!")) {
                 gameState.RestartEasier();
+                hideEndgame = true;
             }
         }
         GUI.EndGroup();
