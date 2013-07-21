@@ -45,15 +45,15 @@ public class IntroDriver : MonoBehaviour {
     public void OnGUI() {
         GUI.skin = skin;
         GUI.Label(new Rect(0, 0,
-                Screen.width, Screen.height * .2f),
-            "The " + gameState.GetEnemyName() + " government has ruled too long. It's time for them to go.\n\n\n\n\n\nMatch 3 symbols to build support and change your affiliations.");
-        GUI.Label(new Rect(0, Screen.height * .3f,
+                Screen.width, Screen.height * .4f),
+            "The " + gameState.GetEnemyName() + " government has ruled too long. It's time for them to go.\n\n\n\n\n\n\n\nMatch 3 symbols to get support and change your affiliations.\nCollect " + gameState.targetScore + " support to overthrow the government.");
+        GUI.Label(new Rect(0, Screen.height * .4f,
                 Screen.width, Screen.height * .2f),
             "Which your uprising be?");
         Rect buttonRect = new Rect(Screen.width * .2f, Screen.height * .9f,
             Screen.width * .6f, 50);
 
-        Rect compareRect = new Rect(Screen.width * .2f, Screen.height * .3f,
+        Rect compareRect = new Rect(Screen.width * .2f, Screen.height * .4f,
             Screen.width * .6f, Screen.height * .15f);
         DrawComparison(compareRect, tilePrefab.textures[1], tilePrefab.textures[4],
             styleHuman, styleRobot, "Human", "Robot");

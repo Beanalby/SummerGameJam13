@@ -129,7 +129,7 @@ public class GameDriver : MonoBehaviour {
         GUI.Box(scoreRect, "");
         GUI.BeginGroup(scoreRect);
         Rect scoreLabel = new Rect(0, 0, scoreRect.width, 25);
-        GUI.Label(scoreLabel, "Score: " + score);
+        GUI.Label(scoreLabel, "Support: " + score);
         GUI.Label(scoreLabel, "Target Score: " + gameState.targetScore, targetStyle);
         Rect timeLabel = new Rect(0, 25, scoreRect.width, 25);
         GUI.Label(timeLabel, "Time left: " + timeLeft.ToString(".0"));
