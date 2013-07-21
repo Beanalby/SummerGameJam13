@@ -48,7 +48,7 @@ public class MatchBoard : MonoBehaviour {
     private int squareMask;
 
     private float noMoveCooldown = 3f;
-    private float noMoveLastCheck = -1f;
+    private float noMoveLastCheck = 0f;
     private string resetMessage = null;
     private float resetMessageStart = -1f;
     private float resetMessageDuration = 2f;
@@ -72,7 +72,7 @@ public class MatchBoard : MonoBehaviour {
     }
 
     void InitBoard() {
-        Random.seed = 123;
+        //Random.seed = 123;
         if(board == null) {
             board = new Tile[boardSize, boardSize];
         }
@@ -81,17 +81,19 @@ public class MatchBoard : MonoBehaviour {
                 CreateTile(x, y, y);
             }
         }
+        // don't let it check for no moves while it's falling
+        noMoveLastCheck = Time.time + 1.5f;
     }
 
     // Update is called once per frame
     void Update() {
-        HashSet<Tile> matches = GetAllMatches();
-        if (matches.Count != 0) {
-            HandleMatches(matches);
-        }
-        HandleNoMoves();
-
         if(isPlaying) {
+            HashSet<Tile> matches = GetAllMatches();
+            if(matches.Count != 0) {
+                HandleMatches(matches);
+            } else {
+                HandleNoMoves();
+            }
             HandleDrag();
             if(Input.GetKeyDown(KeyCode.Space)) {
                 //StartCoroutine(ResetBoard("Tweaking!"));
@@ -147,7 +149,7 @@ public class MatchBoard : MonoBehaviour {
     /// If found, it clears out the board and refills.
     /// </summary>
     void HandleNoMoves() {
-        if(noMoveLastCheck + noMoveCooldown > Time.time)
+        if(noMoveLastCheck + noMoveCooldown > Time.time || board == null)
             return;
         noMoveLastCheck = Time.time;
         if(!HasPotentialMatch()) {
@@ -353,7 +355,6 @@ public class MatchBoard : MonoBehaviour {
                 // X is the current postion, x is a tile we'll be checking
                 // for the same type, and . is a tile that doesn't matter
                 Tile tile = board[x,y];
-
                 int max = boardSize - 1;
                 // -------------------------------------
                 // horizontal match, tile on right joins

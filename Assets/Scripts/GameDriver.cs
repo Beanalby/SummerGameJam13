@@ -10,9 +10,9 @@ public class GameDriver : MonoBehaviour {
 
     const int levelMin = 0, levelMax = 100;
 
-    int score, targetScore;
+    int score;
     float gameStart;
-    float gameDuration = 2;
+    float gameDuration = 5;
     private float timeElapsed, timeLeft;
 
     float levelLaw;
@@ -29,11 +29,11 @@ public class GameDriver : MonoBehaviour {
     private int powerThreshold = 35;
     Rect dudeRect, levelRobotRect, levelReligionRect, levelLawRect, scoreRect;
 
+    private GameState gameState;
     private MatchBoard board;
 
     public void Start() {
         score = 0;
-        targetScore = 50;
         levelLaw = levelRobot = levelReligion = 50;
         dudeRect = new Rect(Screen.width - boardWidth, 0,
             boardWidth, dudeHeight);
@@ -70,6 +70,7 @@ public class GameDriver : MonoBehaviour {
             Screen.height - levelHeight * 3);
 
         board = GameObject.Find("Board").GetComponent<MatchBoard>();
+        gameState = GameObject.Find("GameState").GetComponent<GameState>();
         StartGame();
     }
     public void OnGUI() {
@@ -127,7 +128,7 @@ public class GameDriver : MonoBehaviour {
         GUI.BeginGroup(scoreRect);
         Rect scoreLabel = new Rect(0, 0, scoreRect.width, 25);
         GUI.Label(scoreLabel, "Score: " + score);
-        GUI.Label(scoreLabel, "Target Score: " + targetScore, targetStyle);
+        GUI.Label(scoreLabel, "Target Score: " + gameState.targetScore, targetStyle);
         Rect timeLabel = new Rect(0, 25, scoreRect.width, 25);
         GUI.Label(timeLabel, "Time left: " + timeLeft.ToString(".0"));
         GUI.EndGroup();
@@ -146,14 +147,14 @@ public class GameDriver : MonoBehaviour {
         GUI.Box(endGameRect, "");
         GUI.BeginGroup(endGameRect);
 
-        if(score >= targetScore) {
+        if(score >= gameState.targetScore) {
             GUI.Label(new Rect(0, 0, endGameRect.width, endGameRect.height),
                 "You win!",
                 skin.customStyles[0]);
             if(GUI.Button(new Rect(endGameRect.width / 2 - buttonWidth / 2,
                     endGameRect.height * .75f, buttonWidth, buttonHeight),
                     "Overthrow Government")) {
-                Debug.Log("Overthrowing...");
+                gameState.Transition();
             }
         } else {
             GUI.Label(new Rect(0, 0, endGameRect.width, endGameRect.height),
@@ -162,12 +163,15 @@ public class GameDriver : MonoBehaviour {
             if(GUI.Button(new Rect(endGameRect.width / 2 - buttonWidth / 2,
                     endGameRect.height * .75f, buttonWidth, buttonHeight),
                     "Fight On!")) {
-                Debug.Log("Reloading easier");
+                gameState.RestartEasier();
             }
         }
         GUI.EndGroup();
     }
     public void AddStats(TileType type, float amount) {
+        if(!board.isPlaying) {
+            return;
+        }
         score += (int)amount;
         switch (type) {
             case TileType.Freedom:
