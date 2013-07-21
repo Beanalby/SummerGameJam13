@@ -37,11 +37,20 @@ public class Position
 
 public class MatchBoard : MonoBehaviour {
 
+    public GUISkin skin;
+
     public Tile SquarePrefab;
     const int boardSize = 9;
 
     public Tile[,] board = null;
     private int squareMask;
+
+    private float noMoveCooldown = 3f;
+    private float noMoveLastCheck = -1f;
+    private string resetMessage = null;
+    private float resetMessageStart = -1f;
+    private float resetMessageDuration = 2f;
+    private Interpolate.Function resetEase = Interpolate.Ease(Interpolate.EaseType.EaseOutCirc);
 
     private float dragThreshold = 700;
     Vector3 dragStart = Vector3.zero;
@@ -54,6 +63,7 @@ public class MatchBoard : MonoBehaviour {
     // Use this for initialization
     void Start () {
         driver = GameObject.Find("GameDriver").GetComponent<GameDriver>();
+        squareMask = 1 << LayerMask.NameToLayer("Square");
         selection = transform.FindChild("Selection").gameObject;
         selection.SetActive(false);
         InitBoard();
@@ -61,13 +71,14 @@ public class MatchBoard : MonoBehaviour {
 
     void InitBoard() {
         Random.seed = 123;
-        board = new Tile[boardSize,boardSize];
+        if(board == null) {
+            board = new Tile[boardSize, boardSize];
+        }
         for (int x = 0; x < boardSize; x++) {
             for (int y = 0; y < boardSize; y++) {
                 CreateTile(x, y, y);
             }
         }
-        squareMask = 1 << LayerMask.NameToLayer("Square");
     }
 
     // Update is called once per frame
@@ -77,10 +88,12 @@ public class MatchBoard : MonoBehaviour {
             HandleMatches(matches);
         }
         HandleDrag();
+        HandleNoMoves();
 
         if (Input.GetKeyDown(KeyCode.Space)) {
+            //StartCoroutine(ResetBoard("Tweaking!"));
             List<Position> newMove = FindMatch();
-            if (newMove == null) {
+            if(newMove == null) {
                 Debug.Log("No move :(");
             } else {
                 StartCoroutine(SwapTile(
@@ -122,6 +135,19 @@ public class MatchBoard : MonoBehaviour {
                 dragTile = null;
                 dragStart = Vector3.zero;
             }
+        }
+    }
+
+    /// <summary>
+    /// Occasionally called to watch for the situation of no possible moves.
+    /// If found, it clears out the board and refills.
+    /// </summary>
+    void HandleNoMoves() {
+        if(noMoveLastCheck + noMoveCooldown > Time.time)
+            return;
+        noMoveLastCheck = Time.time;
+        if(!HasPotentialMatch()) {
+            StartCoroutine(ResetBoard("No more moves, resetting..."));
         }
     }
 
@@ -254,6 +280,24 @@ public class MatchBoard : MonoBehaviour {
                 CreateTile(x, targetY, i);
             }
         }
+    }
+
+    // removes all tiles and re-fills the board
+    IEnumerator ResetBoard(string message) {
+        resetMessage = message;
+        resetMessageStart = Time.time;
+
+        for(int x = 0; x < boardSize; x++) {
+            for(int y = 0; y < boardSize; y++) {
+                Tile tile = board[x, y];
+                if(tile != null) {
+                    board[x, y] = null;
+                    tile.Die();
+                }
+            }
+        }
+        yield return new WaitForSeconds(1.5f);
+        InitBoard();
     }
 
     HashSet<Tile> GetAllMatches() {
@@ -467,6 +511,27 @@ public class MatchBoard : MonoBehaviour {
         return new Position(-1, -1);
     }
 
+    public void OnGUI() {
+        GUI.skin = skin;
+        DrawResetMessage();
+    }
+
+    void DrawResetMessage() {
+        if(resetMessage != null) {
+            float elapsed = Time.time - resetMessageStart;
+            if(elapsed > resetMessageDuration) {
+                resetMessage = null;
+                resetMessageStart = -1;
+            } else {
+                Vector3 msgStart = new Vector3(0, Screen.height / 4, 0);
+                Vector3 msgDelta = new Vector3(0, Screen.height / 4, 0);
+                Vector3 pos = Interpolate.Ease(resetEase,
+                    msgStart, msgDelta, elapsed, resetMessageDuration);
+                GUI.Label(new Rect(pos.x, pos.y, Screen.width, 100),
+                    resetMessage);
+            }
+        }
+    }
     public void OnDrawGizmos() {
         Gizmos.color = Color.green;
         Gizmos.DrawWireCube(new Vector3(boardSize/2, boardSize/2, 0),

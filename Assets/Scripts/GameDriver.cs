@@ -54,7 +54,8 @@ public class GameDriver : MonoBehaviour {
         GUI.EndGroup();
     }
     public void AddStats(TileType type, float amount) {
-        Debug.Log(name + " increasing " + type + " by " + amount);
+        //Debug.Log(name + " increasing " + type + " by " + amount);
+        score += (int)amount;
         switch (type) {
             case TileType.Freedom:
                 levelLaw = Mathf.Max(levelMin, Mathf.Min(levelMax, levelLaw - amount)); break;

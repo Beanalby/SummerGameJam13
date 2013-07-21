@@ -14,11 +14,13 @@ public class Tile : MonoBehaviour {
 
     MatchBoard board;
 
+    private bool isDying = false;
+    private float deathDuration = 2f;
     private float moveStarted = -1f;
     private Vector3 moveFrom, moveBy;
     private Interpolate.Function ease;
     public bool IsBusy {
-        get { return moveStarted != -1f; }
+        get { return moveStarted != -1f && !isDying; }
     }
 
     void Start () {
@@ -34,6 +36,20 @@ public class Tile : MonoBehaviour {
         mat.mainTexture = textures[(int)type - 1];
     }
 
+    public void Die() {
+        // invoked when we're clearing the board.  Throw ourselves randomly
+        // at the screen.
+        StartCoroutine(HandleDeath());
+    }
+    private IEnumerator HandleDeath() {
+        gameObject.AddComponent<Rigidbody>();
+        rigidbody.velocity = new Vector3(Random.Range(-1f,1f),
+            Random.Range(-1f, 1f), Random.Range(-1.5f, -.5f));
+        rigidbody.angularVelocity = new Vector3(Random.Range(-1f,1f),
+            Random.Range(-1f, 1f), Random.Range(-1.5f, -.5f));
+        yield return new WaitForSeconds(deathDuration);
+        Destroy(gameObject);
+    }
     // Update is called once per frame
     void Update () {
         HandleMovement();
@@ -75,7 +91,6 @@ public class Tile : MonoBehaviour {
     /// Invoked when it needs to swap to a different location
     /// </summary>
     public void MoveBy(Position from, Position delta, bool isBackground) {
-        Debug.Log(name + " Moving by " + delta + ", background=" + isBackground);
         moveFrom = new Vector3(from.x, from.y, 0);
         // isBackground makes tiles that the user DIDN'T click on move
         // slighitly behind the one they did click on, so whatever they
