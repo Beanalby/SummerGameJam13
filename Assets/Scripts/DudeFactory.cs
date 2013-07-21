@@ -5,7 +5,10 @@ using System.Collections.Generic;
 public class DudeFactory : MonoBehaviour {
     public Dude dudePrefab;
     public Texture2D humanScience, humanReligion, humanFreedom, humanLaw;
+    public Texture2D[] humanScienceAnim, humanReligionAnim, humanFreedomAnim, humanLawAnim;
+
     public Texture2D robotScience, robotReligion, robotFreedom, robotLaw;
+    public Texture2D[] robotScienceAnim, robotReligionAnim, robotFreedomAnim, robotLawAnim;
 
     public List<Dude> MakeDudes(int xMin, int xMax, int y, int num,
             bool isRobot, bool isReligious, bool isLaw) {
@@ -24,29 +27,38 @@ public class DudeFactory : MonoBehaviour {
             if (i < num / 2) {
                 if (isRobot) {
                     if (isReligious) {
-                        dude.primary = robotReligion;
+                        dude.texStatic = robotReligion;
+                        dude.texAnim = robotReligionAnim;
                     } else {
-                        dude.primary = robotScience;
+                        dude.texStatic = robotScience;
+                        dude.texAnim = robotScienceAnim;
                     }
                 } else {
                     if (isReligious) {
-                        dude.primary = humanReligion;
+                        dude.texStatic = humanReligion;
+                        dude.texAnim = humanReligionAnim;
                     } else {
-                        dude.primary = humanScience;
+                        dude.texStatic = humanScience;
+                        dude.texAnim = humanScienceAnim;
                     }
                 }
             } else {
                 if (isRobot) {
                     if (isLaw) {
-                        dude.primary = robotLaw;
+                        dude.texStatic = robotLaw;
+                        dude.texAnim = robotLawAnim;
+
                     } else {
-                        dude.primary = robotFreedom;
+                        dude.texStatic = robotFreedom;
+                        dude.texAnim = robotFreedomAnim;
                     }
                 } else {
                     if (isLaw) {
-                        dude.primary = humanLaw;
+                        dude.texStatic = humanLaw;
+                        dude.texAnim = humanLawAnim;
                     } else {
-                        dude.primary = humanFreedom;
+                        dude.texStatic = humanFreedom;
+                        dude.texAnim = humanFreedomAnim;
                     }
                 }
             }

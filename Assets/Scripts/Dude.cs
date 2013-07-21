@@ -4,15 +4,23 @@ using System.Collections.Generic;
 
 public class Dude : MonoBehaviour {
 
-    public Texture2D primary, alt;
+    public Texture2D texStatic;
+    public Texture2D[] texAnim;
 
     public float xMin, xMax, x, y;
     public bool facingRight;
 
-    private float currentDir, switchCooldown=1f, nextSwitch = -1f;
+    private float currentDir, switchCooldown=3f, nextSwitch = -1f;
+
+    int currentFrame;
+    float nextFrameSwitch;
 
     public void Update() {
-        x = Mathf.Max(xMin + primary.width, Mathf.Min(xMax - primary.width,
+        if (Time.time > nextFrameSwitch) {
+            currentFrame = (currentFrame + 1) % 4;
+            nextFrameSwitch = Time.time + .25f;
+        }
+        x = Mathf.Max(xMin + texStatic.width, Mathf.Min(xMax - texStatic.width,
             x + currentDir * Time.deltaTime));
         if (Time.time > nextSwitch) {
             if (currentDir == 0) {
@@ -30,13 +38,16 @@ public class Dude : MonoBehaviour {
     }
 
     public void OnGUI() {
+        Rect dudeRect;
         if (facingRight) {
-            Rect dudeRect = new Rect(x, y, primary.width, primary.height);
-            GUI.DrawTexture(dudeRect, primary);
+            dudeRect = new Rect(x, y, texStatic.width, texStatic.height);
         } else {
-            Rect dudeRect = new Rect(x+primary.width, y, -primary.width, primary.height);
-            GUI.DrawTexture(dudeRect, primary);
-            //GUI.DrawTextureWithTexCoords(dudeRect, primary, new Rect(0, 0, -1, 1));
+            dudeRect = new Rect(x+texStatic.width, y, -texStatic.width, texStatic.height);
+        }
+        if (currentDir != 0 && texAnim != null && texAnim.Length == 4) {
+            GUI.DrawTexture(dudeRect, texAnim[currentFrame]);
+        } else {
+            GUI.DrawTexture(dudeRect, texStatic);
         }
     }
 }
