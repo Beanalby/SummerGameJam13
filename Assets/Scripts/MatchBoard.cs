@@ -42,6 +42,8 @@ public class MatchBoard : MonoBehaviour {
     public Tile SquarePrefab;
     const int boardSize = 9;
 
+    public bool isPlaying = true;
+
     public Tile[,] board = null;
     private int squareMask;
 
@@ -87,17 +89,19 @@ public class MatchBoard : MonoBehaviour {
         if (matches.Count != 0) {
             HandleMatches(matches);
         }
-        HandleDrag();
         HandleNoMoves();
 
-        if (Input.GetKeyDown(KeyCode.Space)) {
-            //StartCoroutine(ResetBoard("Tweaking!"));
-            List<Position> newMove = FindMatch();
-            if(newMove == null) {
-                Debug.Log("No move :(");
-            } else {
-                StartCoroutine(SwapTile(
-                    board[newMove[0].x, newMove[0].y], newMove[1]));
+        if(isPlaying) {
+            HandleDrag();
+            if(Input.GetKeyDown(KeyCode.Space)) {
+                //StartCoroutine(ResetBoard("Tweaking!"));
+                List<Position> newMove = FindMatch();
+                if(newMove == null) {
+                    Debug.Log("No move :(");
+                } else {
+                    StartCoroutine(SwapTile(
+                        board[newMove[0].x, newMove[0].y], newMove[1]));
+                }
             }
         }
     }
