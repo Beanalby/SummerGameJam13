@@ -18,8 +18,8 @@ public class GameState : MonoBehaviour {
         }
     }
 
-    public float gameDuration = 10;
-    public int targetScore = 10;
+    public float gameDuration = 60;
+    public int targetScore = 100;
 
     public bool isRobotEnemy = false;
     public bool isReligionEnemy = false;
