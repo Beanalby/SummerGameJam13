@@ -67,9 +67,9 @@ public class GameState : MonoBehaviour {
             name = name + "Scientific ";
         }
         if (isLaw) {
-            name = name + "Anarchist";
-        } else {
             name = name + "Police State";
+        } else {
+            name = name + "Anarchist";
         }
         return name;
     }

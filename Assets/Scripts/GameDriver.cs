@@ -25,11 +25,10 @@ public class GameDriver : MonoBehaviour {
     GUIStyle styleHuman, styleRobot, styleScience, styleReligion, styleFreedom, styleLaw;
 
     private int boardWidth = 600;
-    int dudeHeight = 130;
     int levelHeight = 100;
     int levelWidth;
     private int powerThreshold = 35;
-    Rect dudeRect, levelRobotRect, levelReligionRect, levelLawRect, scoreRect;
+    Rect levelRobotRect, levelReligionRect, levelLawRect, scoreRect;
 
     private GameState gameState;
     private MatchBoard board;
@@ -78,14 +77,9 @@ public class GameDriver : MonoBehaviour {
     }
     public void OnGUI() {
         GUI.skin = skin;
-        DrawDude();
         DrawLevels();
         DrawScore();
         DrawEndGame();
-    }
-
-    public void DrawDude() {
-        GUI.Box(dudeRect, gameState.GetEnemyName());
     }
 
     public void DrawLevels() {

@@ -1,5 +1,6 @@
 using UnityEngine;
 using System.Collections;
+using System.Collections.Generic;
 
 public class TransitionDriver : MonoBehaviour {
     public GUISkin skin;
@@ -7,10 +8,15 @@ public class TransitionDriver : MonoBehaviour {
     private GameState gameState;
     string enemyDisplay, playerDisplay;
 
+    public DudeFactory dudeFactory;
+    private List<Dude> dudes;
+
     public void Start() {
         gameState = GameState.instance;
         enemyDisplay = gameState.GetEnemyName();
         playerDisplay = gameState.GetPlayerName();
+        dudes = dudeFactory.MakeDudes(0, Screen.width, 200, 8,
+            gameState.isRobotPlayer, gameState.isReligionPlayer, gameState.isLawPlayer);
     }
 
     public void OnGUI() {

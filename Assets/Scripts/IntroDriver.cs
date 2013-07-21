@@ -1,5 +1,6 @@
 using UnityEngine;
 using System.Collections;
+using System.Collections.Generic;
 
 public class IntroDriver : MonoBehaviour {
 
@@ -8,11 +9,17 @@ public class IntroDriver : MonoBehaviour {
 
     public Tile tilePrefab;
 
+    public DudeFactory dudeFactory;
+
     private GameState gameState;
     GUIStyle styleHuman, styleRobot, styleScience, styleReligion, styleFreedom, styleLaw, styleScore, styleTime;
+    List<Dude> dudes;
+
     public void Start() {
         gameState = GameState.instance;
-
+        Debug.Log(gameState.isRobotEnemy + "/" + gameState.isReligionEnemy + "/" + gameState.isLawEnemy + " gives " + gameState.GetEnemyName());
+        dudes = dudeFactory.MakeDudes(0, Screen.width, 25, 8,
+            gameState.isRobotEnemy, gameState.isReligionEnemy, gameState.isLawEnemy);
         styleHuman = new GUIStyle(hudSkin.label);
         styleHuman.normal.textColor = new Color(1, 1, 0);
         styleRobot = new GUIStyle(hudSkin.label);
@@ -32,15 +39,15 @@ public class IntroDriver : MonoBehaviour {
         styleScore = new GUIStyle(hudSkin.label);
         styleTime = new GUIStyle(hudSkin.label);
         styleTime.alignment = TextAnchor.UpperRight;
+
     }
 
     public void OnGUI() {
         GUI.skin = skin;
         GUI.Label(new Rect(0, 0,
                 Screen.width, Screen.height * .2f),
-            "The " + gameState.GetEnemyName() + " government has ruled too long.\n"
-            + " It's time for them to go.\n\nMatch 3 symbols to build support and change your affiliations.");
-        GUI.Label(new Rect(0, Screen.height * .2f,
+            "The " + gameState.GetEnemyName() + " government has ruled too long. It's time for them to go.\n\n\n\n\n\nMatch 3 symbols to build support and change your affiliations.");
+        GUI.Label(new Rect(0, Screen.height * .3f,
                 Screen.width, Screen.height * .2f),
             "Which your uprising be?");
         Rect buttonRect = new Rect(Screen.width * .2f, Screen.height * .9f,
