@@ -51,13 +51,13 @@ public class MatchBoard : MonoBehaviour {
     private GameDriver driver;
     private GameObject selection;
 
-	// Use this for initialization
-	void Start () {
+    // Use this for initialization
+    void Start () {
         driver = GameObject.Find("GameDriver").GetComponent<GameDriver>();
         selection = transform.FindChild("Selection").gameObject;
         selection.SetActive(false);
         InitBoard();
-	}
+    }
 
     void InitBoard() {
         Random.seed = 123;
@@ -87,7 +87,7 @@ public class MatchBoard : MonoBehaviour {
                     board[newMove[0].x, newMove[0].y], newMove[1]));
             }
         }
-	}
+    }
 
     private void HandleDrag() {
         if (Input.GetMouseButtonDown(0)) {
@@ -172,7 +172,7 @@ public class MatchBoard : MonoBehaviour {
         }
 
         MoveTile(current, currentPos, delta);
-        MoveTile(other, otherPos, delta.GetOpposite());
+        MoveTile(other, otherPos, delta.GetOpposite(), true);
         while (current.IsBusy || other.IsBusy) {
             yield return 0;
         }
@@ -184,7 +184,7 @@ public class MatchBoard : MonoBehaviour {
         if (matches.Count == 0) {
             // didn't work, move the squares back
             MoveTile(current, currentPos+delta, delta.GetOpposite());
-            MoveTile(other, otherPos-delta, delta);
+            MoveTile(other, otherPos-delta, delta, true);
             yield break;
         } else {
             HandleMatches(matches);
@@ -196,9 +196,10 @@ public class MatchBoard : MonoBehaviour {
     /// Assumes position is valid, tile exists, etc.
     /// Used by SwapTile & refillBoard
     /// </summary>
-    private void MoveTile(Tile tile, Position from, Position delta) {
+    private void MoveTile(Tile tile, Position from, Position delta,
+            bool isBackground=false) {
         //Debug.Log("Moving " + tile.name + " from " + from + " by " + delta);
-        tile.MoveBy(from, delta, false);
+        tile.MoveBy(from, delta, isBackground);
         Position target = from + delta;
         //Debug.Log("Setting board @ " + target.x + "," + target.y);
         board[target.x, target.y] = tile;
