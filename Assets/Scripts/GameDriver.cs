@@ -6,6 +6,8 @@ public class GameDriver : MonoBehaviour {
 
     public GUISkin skin;
 
+    public BonusEffect bonusPrefab;
+
     public Texture2D LevelRobotTex, LevelReligionTex, LevelLawTex;
     public Texture2D LevelMarker;
 
@@ -128,7 +130,6 @@ public class GameDriver : MonoBehaviour {
         if(timeLeft > 0 || hideEndgame) {
             return;
         }
-        //Debug.Log("endGame: timeLeft=" + timeLeft + ", score=" + score + ", target=" + gameState.targetScore);
         int buttonWidth = 400, buttonHeight = 50;
         Rect endGameRect = new Rect(Screen.width * .1f, Screen.height * .25f,
             Screen.width * .8f, Screen.height * .5f);
@@ -220,9 +221,9 @@ public class GameDriver : MonoBehaviour {
             lastMatches.Dequeue();
         }
 
-        if (IsBonusActive(TileType.Freedom)) {
-            // add a bonus if the three most recent matches were all different
-        }
+        BonusEffect bonus = (Instantiate(bonusPrefab.gameObject) as GameObject).GetComponent<BonusEffect>();
+        bonus.type = TileDetail.Get(type);
+        bonus.style = new GUIStyle(skin.label);
     }
 
     void StartGame() {

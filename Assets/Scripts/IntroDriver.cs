@@ -15,7 +15,6 @@ public class IntroDriver : MonoBehaviour {
 
     public void Start() {
         gameState = GameState.instance;
-        Debug.Log(gameState.isRobotEnemy + "/" + gameState.isReligionEnemy + "/" + gameState.isLawEnemy + " gives " + gameState.GetEnemyName());
         dudeFactory.MakeDudes(0, Screen.width, 25, 8,
             gameState.isRobotEnemy, gameState.isReligionEnemy, gameState.isLawEnemy);
     }

@@ -14,7 +14,6 @@ public class DudeFactory : MonoBehaviour {
             bool isRobot, bool isReligion, bool isLaw) {
         List<Dude> dudes = new List<Dude>();
 
-        Debug.Log("Creating dudes with law=" + isLaw);
         // they'll all be either robot or human, make the rest a mix of the two
         int i;
         for (i = 0; i < num; i++) {

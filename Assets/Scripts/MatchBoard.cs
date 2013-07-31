@@ -57,7 +57,6 @@ public class MatchBoard : MonoBehaviour {
     private float dragThreshold = 700;
     Vector3 dragStart = Vector3.zero;
     Tile dragTile = null;
-    TileType draggedType = TileType.None;
 
     private GameDriver driver;
     private GameObject selection;
@@ -90,7 +89,7 @@ public class MatchBoard : MonoBehaviour {
         if(isPlaying) {
             HashSet<Tile> matches = GetAllMatches();
             if(matches.Count != 0) {
-                HandleMatches(matches);
+                HandleMatches(TileType.None, matches);
             } else {
                 HandleNoMoves();
             }
@@ -99,7 +98,7 @@ public class MatchBoard : MonoBehaviour {
                 //StartCoroutine(ResetBoard("Tweaking!"));
                 List<Position> newMove = FindMatch();
                 if(newMove == null) {
-                    Debug.Log("No move :(");
+                    Debug.LogError("No move :(");
                 } else {
                     StartCoroutine(SwapTile(
                         board[newMove[0].x, newMove[0].y], newMove[1]));
@@ -137,7 +136,6 @@ public class MatchBoard : MonoBehaviour {
                     StartCoroutine(SwapTile(dragTile,
                         new Position(0, diff.y > 0 ? 1 : -1)));
                 }
-                draggedType = dragTile.type;
                 dragTile = null;
                 dragStart = Vector3.zero;
             }
@@ -162,21 +160,15 @@ public class MatchBoard : MonoBehaviour {
     /// eventually be, offset defines now high up the tile should start.
     /// </summary>
     private Tile CreateTile(int x, int y, int offset) {
-        //Debug.Log("------------------------");
-        //Debug.Log("CreateTile for (" + x + "," + y + "), offset=" + offset);
-        //Debug.Log("CreateTile instantiating: " + System.DateTime.Now.ToString("ss.ffffff"));
         GameObject obj = Instantiate(SquarePrefab.gameObject) as GameObject;
-        //Debug.Log("CreateTile instantiated: " + System.DateTime.Now.ToString("ss.ffffff"));
         obj.transform.parent = transform;
         obj.transform.position = new Vector3(x, boardSize + offset, 0);
         Tile tile = obj.GetComponent<Tile>();
         // tile normally as to travel full board size.  Distance is
         // lessened when its position is higher, increased by offset.
         int distance = boardSize - y + offset;
-        //Debug.Log("CreateTile calling MoveTile: " + System.DateTime.Now.ToString("ss.ffffff"));
         MoveTile(tile, new Position(x, boardSize+offset),
             new Position(0, -distance));
-        //Debug.Log("CreateTile returning: " + System.DateTime.Now.ToString("ss.ffffff"));
         return tile;
     }
 
@@ -219,7 +211,7 @@ public class MatchBoard : MonoBehaviour {
             MoveTile(other, otherPos-delta, delta, true);
             yield break;
         } else {
-            HandleMatches(matches);
+            HandleMatches(current.type, matches);
         }
     }
 
@@ -230,18 +222,20 @@ public class MatchBoard : MonoBehaviour {
     /// </summary>
     private void MoveTile(Tile tile, Position from, Position delta,
             bool isBackground=false) {
-        //Debug.Log("Moving " + tile.name + " from " + from + " by " + delta);
         tile.MoveBy(from, delta, isBackground);
         Position target = from + delta;
-        //Debug.Log("Setting board @ " + target.x + "," + target.y);
         board[target.x, target.y] = tile;
         tile.UpdateName(target);
     }
 
-    void HandleMatches(HashSet<Tile> matches) {
+    void HandleMatches(TileType primaryType, HashSet<Tile> matches) {
         Dictionary<TileType, int> score = new Dictionary<TileType,int>();
+        if (primaryType != TileType.None) {
+            driver.MatchedTiles(primaryType);
+        }
+
         foreach (Tile tile in matches) {
-            int amount = (tile.type == draggedType ? 4 : 1);
+            int amount = (tile.type == primaryType ? 4 : 1);
             if (score.ContainsKey(tile.type)) {
                 score[tile.type] += amount;
             } else {
@@ -268,7 +262,6 @@ public class MatchBoard : MonoBehaviour {
                 Tile tile = board[x,y];
                 if (tile == null) {
                     numHoles++;
-                    //Debug.Log("Noting hole at " + x + "," + y);
                 } else {
                     if (numHoles != 0) {
                         MoveTile(tile, new Position(x, y),
@@ -281,7 +274,6 @@ public class MatchBoard : MonoBehaviour {
                 // create the tile off the top of the board and let
                 // it fall down.  Additional tiles for multiple holes
                 // start higher & higher
-                //Debug.Log("Filling hole #" + i + "/" + numHoles);
                 int targetY = boardSize - numHoles + i;
                 CreateTile(x, targetY, i);
             }
