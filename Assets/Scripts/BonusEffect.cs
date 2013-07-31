@@ -4,17 +4,25 @@ using System.Collections;
 public class BonusEffect : MonoBehaviour {
     public TileDetail type;
     public float duration;
+    public float amount = -1f;
+
     [HideInInspector]
     public GUIStyle style;
 
+    private string message;
     private float startTime;
-    private float startY = 100;
-    private float endY = 200;
+    private float startY = 75;
+    private float endY = 100;
     private Color color;
 
     public void Start() {
         startTime = Time.time;
         color = type.color;
+        if (amount != -1f) {
+            message = "BONUS +" + amount + " " + type.bonusName;
+        } else {
+            message = "BONUS " + type.bonusName;
+        }
     }
 
     public void OnGUI() {
@@ -24,8 +32,14 @@ public class BonusEffect : MonoBehaviour {
         }
         float percent = (Time.time - startTime) / duration;
         float y = Mathf.Lerp(startY, endY, percent);
-        color.a = 1 - percent;
+        if (percent < .5f) {
+            color.a = 1;
+        } else {
+            color.a = -2 * percent + 2f;
+        }
         style.normal.textColor = color;
-        GUI.Label(new Rect(0, y, 300, 50), "BONUS " + type.bonusName, style);
+        Rect bonusRect = new Rect(0, y, 300, 75);
+        //GUI.Box(bonusRect, "");
+        GUI.Label(bonusRect, message, style);
     }
 }

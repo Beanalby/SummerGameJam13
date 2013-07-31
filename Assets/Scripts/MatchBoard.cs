@@ -71,7 +71,7 @@ public class MatchBoard : MonoBehaviour {
     }
 
     void InitBoard() {
-        //Random.seed = 123;
+        Random.seed = 123; // +++
         if(board == null) {
             board = new Tile[boardSize, boardSize];
         }

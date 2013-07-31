@@ -1,6 +1,7 @@
 using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 
 public class GameDriver : MonoBehaviour {
 
@@ -25,13 +26,15 @@ public class GameDriver : MonoBehaviour {
     GUIStyle targetStyle;
 
     private int boardWidth = 600;
-    int levelHeight = 100;
-    int levelWidth;
+    private int levelHeight = 100;
+    private int levelWidth;
     private int bonusThreshold = 35;
     Rect levelRobotRect, levelReligionRect, levelLawRect, scoreRect;
 
     private GameState gameState;
     private MatchBoard board;
+
+    private HashSet<TileDetail> bonuses;
 
     public DudeFactory dudeFactory;
 
@@ -39,11 +42,14 @@ public class GameDriver : MonoBehaviour {
 
     public void Start() {
         lastMatches = new Queue<TileType>(3);
+        bonuses = new HashSet<TileDetail>();
         gameState = GameState.instance;
         score = 0;
         levelLaw = Random.Range(48,53);
         levelRobot = Random.Range(48,53);
         levelReligion = Random.Range(48,53);
+        levelLaw = 90; bonuses.Add(TileDetail.Law); // +++
+
         dudeFactory.MakeDudes(Screen.width - boardWidth, Screen.width, 0, 6,
             gameState.isRobotEnemy, gameState.isReligionEnemy, gameState.isLawEnemy);
         targetStyle = new GUIStyle(skin.label);
@@ -178,14 +184,24 @@ public class GameDriver : MonoBehaviour {
                 return levelRobot > (100 - bonusThreshold);
             case TileType.Science:
                 return levelReligion < bonusThreshold;
+            case TileType.Score:
+                return false;
+            case TileType.Time:
+                return false;
             default:
                 throw new System.ArgumentException(type.ToString());
         }
     }
 
-    public void AddBonus(TileType type, float amount) {
+    public void AddBonus(TileType type, int amount) {
         // indicate that the user just got a bonus
+        score += amount;
+        BonusEffect bonus = (Instantiate(bonusPrefab.gameObject) as GameObject).GetComponent<BonusEffect>();
+        bonus.type = TileDetail.Get(type);
+        bonus.style = new GUIStyle(skin.customStyles[1]);
+        bonus.amount = amount;
     }
+
     public void AddStats(TileType type, float amount) {
         if(!board.isPlaying) {
             return;
@@ -211,19 +227,41 @@ public class GameDriver : MonoBehaviour {
                 gameStart += 5; // HACK!
                 break;
         }
+        if (IsBonusActive(type)) {
+            bonuses.Add(TileDetail.Get(type));
+        }
     }
+
+    public int GetCurrentStreak() {
+        if (lastMatches.Count == 0) {
+            return 0;
+        }
+        // Queue's most recently pushed items are at upper end
+        TileType latest = lastMatches.ElementAt<TileType>(lastMatches.Count - 1);
+        int streak = 1;
+        for (int i = lastMatches.Count - 2; i >= 0; i--) {
+            if (latest == lastMatches.ElementAt<TileType>(i)) {
+                streak++;
+            } else {
+                break;
+            }
+        }
+        return streak;
+    }
+
 
     // Indicates the user actively matched a type of tiles, might
     // trigger bonuses
     public void MatchedTiles(TileType type) {
         lastMatches.Enqueue(type);
-        while (lastMatches.Count > 3) {
+        while (lastMatches.Count > 4) {
             lastMatches.Dequeue();
         }
 
-        BonusEffect bonus = (Instantiate(bonusPrefab.gameObject) as GameObject).GetComponent<BonusEffect>();
-        bonus.type = TileDetail.Get(type);
-        bonus.style = new GUIStyle(skin.label);
+        // let any active bonuses know about the match
+        foreach (TileDetail td in bonuses) {
+            td.MatchedTiles(this);
+        }
     }
 
     void StartGame() {
