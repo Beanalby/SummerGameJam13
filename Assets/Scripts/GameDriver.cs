@@ -21,46 +21,31 @@ public class GameDriver : MonoBehaviour {
     float levelReligion;
 
     GUIStyle targetStyle;
-    GUIStyle styleHuman, styleRobot, styleScience, styleReligion, styleFreedom, styleLaw;
 
     private int boardWidth = 600;
     int levelHeight = 100;
     int levelWidth;
-    private int powerThreshold = 35;
+    private int bonusThreshold = 35;
     Rect levelRobotRect, levelReligionRect, levelLawRect, scoreRect;
 
     private GameState gameState;
     private MatchBoard board;
 
     public DudeFactory dudeFactory;
-    private List<Dude> dudes;
+
+    private Queue<TileType> lastMatches;
 
     public void Start() {
+        lastMatches = new Queue<TileType>(3);
         gameState = GameState.instance;
         score = 0;
         levelLaw = Random.Range(48,53);
         levelRobot = Random.Range(48,53);
         levelReligion = Random.Range(48,53);
-        dudes = dudeFactory.MakeDudes(Screen.width - boardWidth, Screen.width, 0, 6,
+        dudeFactory.MakeDudes(Screen.width - boardWidth, Screen.width, 0, 6,
             gameState.isRobotEnemy, gameState.isReligionEnemy, gameState.isLawEnemy);
         targetStyle = new GUIStyle(skin.label);
         targetStyle.alignment = TextAnchor.UpperRight;
-
-        styleHuman = new GUIStyle(skin.label);
-        styleHuman.normal.textColor = new Color(1, 1, 0);
-        styleRobot = new GUIStyle(skin.label);
-        styleRobot.normal.textColor = new Color(1, 0, 0);
-        styleRobot.alignment = TextAnchor.UpperRight;
-        styleScience = new GUIStyle(skin.label);
-        styleScience.normal.textColor = new Color(0, 0, 1);
-        styleReligion = new GUIStyle(skin.label);
-        styleReligion.normal.textColor = new Color(0, 1, 1);
-        styleReligion.alignment = TextAnchor.UpperRight;
-        styleFreedom = new GUIStyle(skin.label);
-        styleFreedom.normal.textColor = new Color(1, 1, 1);
-        styleLaw = new GUIStyle(skin.label);
-        styleLaw.normal.textColor = new Color(0, 1, 0);
-        styleLaw.alignment = TextAnchor.UpperRight;
 
         levelWidth = (Screen.width - boardWidth);
         levelRobotRect = new Rect(0, Screen.height - (levelHeight * 3),
@@ -85,33 +70,36 @@ public class GameDriver : MonoBehaviour {
 
     public void DrawLevels() {
         DrawLevel(levelRobotRect, LevelRobotTex, levelRobot,
-            "Human", "Human Creativity", "Randomly Doubles matches", styleHuman,
-            "Robot", "Automation", "Automatically matches tiles for you", styleRobot);
+            TileDetail.Human, TileDetail.Robot);
         DrawLevel(levelReligionRect, LevelReligionTex, levelReligion,
-            "Science", "Breakthrough", "Bonus for fast matches", styleScience,
-            "Religion", "Redemption", "Highlights matches faster", styleReligion);
+            TileDetail.Science, TileDetail.Religion);
         DrawLevel(levelLawRect, LevelLawTex, levelLaw,
-            "Freedom", "Freedom of Choice", "Bonus for matching different tiles", styleFreedom,
-            "Law", "Uphold Justice", "Bonus for matching same tile repeatedly", styleLaw);
+            TileDetail.Freedom, TileDetail.Law);
+
     }
 
     private void DrawLevel(Rect rect, Texture meter, float level,
-            string labelLeft, string powerLeft, string descLeft, GUIStyle styleLeft,
-            string labelRight, string powerRight, string descRight, GUIStyle styleRight) {
+            TileDetail left, TileDetail right) {
 
         float pad = .04f;
         GUI.Box(new Rect(0, rect.yMin, rect.width, rect.height), "");
         GUI.BeginGroup(rect);
         Rect powerRect = new Rect(rect.width*pad, 0, rect.width * (1-2*pad), rect.height / 2);
-        if(level < powerThreshold) {
-            GUI.Label(powerRect, "BONUS! " + powerLeft + ": " + descLeft, styleLeft);
-        } else if(level > (100 - powerThreshold)) {
-            GUI.Label(powerRect, "BONUS! " + powerRight + ": " + descRight, styleRight);
+        GUIStyle style = new GUIStyle(skin.label);
+        if(level < bonusThreshold) {
+            style.normal.textColor = left.color;
+            GUI.Label(powerRect, "BONUS! " + left.bonusName + ": " + left.bonusDescription, style);
+        } else if(level > (100 - bonusThreshold)) {
+            style.normal.textColor = right.color;
+            GUI.Label(powerRect, "BONUS! " + right.bonusName + ": " + right.bonusDescription, style);
         }
         Rect labelRect = new Rect(rect.width*pad, rect.height / 2,
             rect.width * (1-2*pad),  rect.height / 4);
-        GUI.Label(labelRect, labelLeft, styleLeft);
-        GUI.Label(labelRect, labelRight, styleRight);
+        style.normal.textColor = left.color;
+        GUI.Label(labelRect, left.type.ToString(), style);
+        style.normal.textColor = right.color;
+        style.alignment = TextAnchor.UpperRight;
+        GUI.Label(labelRect, right.type.ToString(), style);
 
         Rect meterRect = new Rect(rect.width*pad, rect.height * .75f,
             rect.width * (1-2*pad), meter.height);
@@ -174,6 +162,29 @@ public class GameDriver : MonoBehaviour {
         }
         GUI.EndGroup();
     }
+
+    private bool IsBonusActive(TileType type) {
+        switch (type) {
+            case TileType.Freedom:
+                return levelLaw < bonusThreshold;
+            case TileType.Human:
+                return levelRobot < bonusThreshold;
+            case TileType.Law:
+                return levelLaw > (100 - bonusThreshold);
+            case TileType.Religion:
+                return levelReligion > (100 - bonusThreshold);
+            case TileType.Robot:
+                return levelRobot > (100 - bonusThreshold);
+            case TileType.Science:
+                return levelReligion < bonusThreshold;
+            default:
+                throw new System.ArgumentException(type.ToString());
+        }
+    }
+
+    public void AddBonus(TileType type, float amount) {
+        // indicate that the user just got a bonus
+    }
     public void AddStats(TileType type, float amount) {
         if(!board.isPlaying) {
             return;
@@ -186,7 +197,7 @@ public class GameDriver : MonoBehaviour {
                 levelRobot = Mathf.Max(levelMin, Mathf.Min(levelMax, levelRobot - amount)); break;
             case TileType.Law:
                 levelLaw = Mathf.Max(levelMin, Mathf.Min(levelMax, levelLaw + amount)); break;
-            case TileType.Religious:
+            case TileType.Religion:
                 levelReligion = Mathf.Max(levelMin, Mathf.Min(levelMax, levelReligion + amount)); break;
             case TileType.Robot:
                 levelRobot = Mathf.Max(levelMin, Mathf.Min(levelMax, levelRobot + amount)); break;
@@ -198,6 +209,19 @@ public class GameDriver : MonoBehaviour {
             case TileType.Time:
                 gameStart += 5; // HACK!
                 break;
+        }
+    }
+
+    // Indicates the user actively matched a type of tiles, might
+    // trigger bonuses
+    public void MatchedTiles(TileType type) {
+        lastMatches.Enqueue(type);
+        while (lastMatches.Count > 3) {
+            lastMatches.Dequeue();
+        }
+
+        if (IsBonusActive(TileType.Freedom)) {
+            // add a bonus if the three most recent matches were all different
         }
     }
 

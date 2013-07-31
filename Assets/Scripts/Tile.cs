@@ -1,18 +1,15 @@
 using UnityEngine;
 using System.Collections;
 
-public enum TileType { None, Freedom, Human, Law, Religious, Robot, Science, Score, Time };
-
 public class Tile : MonoBehaviour {
 
     public const float moveDuration = .5f;
 
     public TileType type;
 
-    public Color[] colors;
-    public Texture[] textures;
-
     MatchBoard board;
+
+    private TileDetail detail;
 
     private bool isDying = false;
     private float deathDuration = 2f;
@@ -29,11 +26,12 @@ public class Tile : MonoBehaviour {
         // choose a random square type
         System.Array types = System.Enum.GetValues(typeof(TileType));
         type = (TileType)types.GetValue(Random.Range(1, types.Length));
-
+        detail = TileDetail.Get(type);
         UpdateName();
         Material mat = GetComponentInChildren<MeshRenderer>().material;
         //mat.color = colors[(int)type - 1];
-        mat.mainTexture = textures[(int)type - 1];
+        //mat.mainTexture = textures[(int)type - 1];
+        mat.mainTexture = detail.texture;
     }
 
     public void Die() {

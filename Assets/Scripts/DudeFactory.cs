@@ -11,7 +11,7 @@ public class DudeFactory : MonoBehaviour {
     public Texture2D[] robotScienceAnim, robotReligionAnim, robotFreedomAnim, robotLawAnim;
 
     public List<Dude> MakeDudes(int xMin, int xMax, int y, int num,
-            bool isRobot, bool isReligious, bool isLaw) {
+            bool isRobot, bool isReligion, bool isLaw) {
         List<Dude> dudes = new List<Dude>();
 
         Debug.Log("Creating dudes with law=" + isLaw);
@@ -26,7 +26,7 @@ public class DudeFactory : MonoBehaviour {
             dude.y = y;
             if (i < num / 2) {
                 if (isRobot) {
-                    if (isReligious) {
+                    if (isReligion) {
                         dude.texStatic = robotReligion;
                         dude.texAnim = robotReligionAnim;
                     } else {
@@ -34,7 +34,7 @@ public class DudeFactory : MonoBehaviour {
                         dude.texAnim = robotScienceAnim;
                     }
                 } else {
-                    if (isReligious) {
+                    if (isReligion) {
                         dude.texStatic = humanReligion;
                         dude.texAnim = humanReligionAnim;
                     } else {

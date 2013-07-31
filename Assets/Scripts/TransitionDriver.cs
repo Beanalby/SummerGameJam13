@@ -9,13 +9,12 @@ public class TransitionDriver : MonoBehaviour {
     string enemyDisplay, playerDisplay;
 
     public DudeFactory dudeFactory;
-    private List<Dude> dudes;
 
     public void Start() {
         gameState = GameState.instance;
         enemyDisplay = gameState.GetEnemyName();
         playerDisplay = gameState.GetPlayerName();
-        dudes = dudeFactory.MakeDudes(0, Screen.width, 200, 8,
+        dudeFactory.MakeDudes(0, Screen.width, 200, 8,
             gameState.isRobotPlayer, gameState.isReligionPlayer, gameState.isLawPlayer);
     }
 
