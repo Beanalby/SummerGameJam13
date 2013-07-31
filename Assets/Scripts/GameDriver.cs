@@ -48,7 +48,7 @@ public class GameDriver : MonoBehaviour {
         levelLaw = Random.Range(48,53);
         levelRobot = Random.Range(48,53);
         levelReligion = Random.Range(48,53);
-        levelLaw = 90; bonuses.Add(TileDetail.Law); // +++
+        levelLaw = 0; bonuses.Add(TileDetail.Freedom); // +++
 
         dudeFactory.MakeDudes(Screen.width - boardWidth, Screen.width, 0, 6,
             gameState.isRobotEnemy, gameState.isReligionEnemy, gameState.isLawEnemy);
@@ -230,6 +230,28 @@ public class GameDriver : MonoBehaviour {
         if (IsBonusActive(type)) {
             bonuses.Add(TileDetail.Get(type));
         }
+        TileDetail opposite = TileDetail.GetOpposite(type);
+        if (opposite != null && !IsBonusActive(opposite.type)) {
+            bonuses.Remove(opposite);
+        }
+    }
+
+    /// <summary>
+    /// Gets the current "anti" streak, matching different tiles
+    /// </summary>
+    /// <returns></returns>
+    public int GetCurrentAntiStreak() {
+        int antiStreak = 0;
+        HashSet<TileType> seenTiles = new HashSet<TileType>();
+        for (int i = lastMatches.Count - 1; i >= 0; i--) {
+            TileType tile = lastMatches.ElementAt<TileType>(i);
+            if (seenTiles.Add(tile)) {
+                antiStreak++;
+            } else {
+                break;
+            }
+        }
+        return antiStreak;
     }
 
     public int GetCurrentStreak() {
@@ -248,7 +270,6 @@ public class GameDriver : MonoBehaviour {
         }
         return streak;
     }
-
 
     // Indicates the user actively matched a type of tiles, might
     // trigger bonuses

@@ -84,6 +84,19 @@ public abstract class TileDetail {
             default: throw new System.ArgumentException(type.ToString());
         }
     }
+    public static TileDetail GetOpposite(TileType type) {
+        switch (type) {
+            case TileType.Freedom: return Law;
+            case TileType.Human: return Robot;
+            case TileType.Law: return Freedom;
+            case TileType.Religion: return Science;
+            case TileType.Robot: return Human;
+            case TileType.Science: return Freedom;
+            case TileType.Score: return null;
+            case TileType.Time: return null;
+            default: throw new System.ArgumentException(type.ToString());
+        }
+    }
 
     public TileType type;
     public string introDescription;
