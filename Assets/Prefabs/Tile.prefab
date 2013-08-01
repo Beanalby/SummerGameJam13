@@ -11,7 +11,7 @@ GameObject:
   - 114: {fileID: 11400000}
   - 65: {fileID: 6500002}
   m_Layer: 8
-  m_Name: Square
+  m_Name: Tile
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -118,25 +118,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 375a80eb28d305146a26dfa6ec11c76a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  matchEffect: {fileID: 100000, guid: 61c14648e7d27b049aedf32319a53389, type: 2}
   type: 0
-  colors:
-  - {r: 1, g: 1, b: 1, a: 0}
-  - {r: .972028017, g: 1, b: 0, a: 0}
-  - {r: .00699305534, g: 1, b: 0, a: 0}
-  - {r: .701492548, g: .874752104, b: 1, a: 0}
-  - {r: 1, g: 0, b: 0, a: 0}
-  - {r: .0895521566, g: 0, b: .985074639, a: 0}
-  - {r: 0, g: 0, b: 0, a: 0}
-  - {r: 1, g: .692307651, b: 0, a: 0}
-  textures:
-  - {fileID: 2800000, guid: 5c14617fcfd2fac48b83f3c9e961f54f, type: 3}
-  - {fileID: 2800000, guid: d19aa42fc6efabd40a1f042be0f68cf1, type: 3}
-  - {fileID: 2800000, guid: d67cddd2289af2d47a5e0a1effe336da, type: 3}
-  - {fileID: 2800000, guid: c4a8c1f11d10b3649a47d70274e066e8, type: 3}
-  - {fileID: 2800000, guid: 44d85805a8a9d1241af9d6d5d0efcbdc, type: 3}
-  - {fileID: 2800000, guid: 9ec9fa6240e7f5445bd12f00fffb175e, type: 3}
-  - {fileID: 2800000, guid: 26df89f8d8299e244921cadc94f1dad7, type: 3}
-  - {fileID: 2800000, guid: 59ad64d9c4d534b43b009e0a47afb0ba, type: 3}
 --- !u!1001 &100100000
 Prefab:
   m_ObjectHideFlags: 1

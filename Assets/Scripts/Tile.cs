@@ -3,6 +3,8 @@ using System.Collections;
 
 public class Tile : MonoBehaviour {
 
+    public GameObject matchEffect;
+
     public const float moveDuration = .5f;
 
     public TileType type;
@@ -71,7 +73,16 @@ public class Tile : MonoBehaviour {
     }
 
     public void Matched() {
+        GameObject obj = Instantiate(matchEffect) as GameObject;
+        obj.transform.position = transform.position;
+        ParticleSystem ps = obj.GetComponent<ParticleSystem>();
+        if (ps == null) {
+            Debug.LogError("No particle system on the matchEffect!");
+            return;
+        }
+        ps.startColor = TileDetail.Get(type).color;
         Destroy(gameObject);
+        Destroy(obj, ps.startLifetime);
     }
     /// <summary>
     /// Invoked when a board's position changes to update its name
