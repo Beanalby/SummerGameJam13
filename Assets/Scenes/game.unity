@@ -116,6 +116,9 @@ MonoBehaviour:
   skin: {fileID: 11400000, guid: 411ce716f86502d47ae378444aa0f6ec, type: 2}
   SquarePrefab: {fileID: 11400000, guid: 7309143493225644a901bcf2c265f7a5, type: 2}
   HintPrefab: {fileID: 11400000, guid: d191ebfcec36e864390a7a40df04130e, type: 2}
+  matchSound: {fileID: 8300000, guid: 1752933f98db37047b5cefdcc9ad4964, type: 3}
+  matchNextSound: {fileID: 8300000, guid: 067b095e5023cd1498dc692b97004ca4, type: 3}
+  matchBadSound: {fileID: 8300000, guid: e87dcf8c53bac0d46b176d9d06d83946, type: 3}
   isPlaying: 1
 --- !u!1001 &710254252
 Prefab:
@@ -166,7 +169,6 @@ GameObject:
   m_Component:
   - 4: {fileID: 928132080}
   - 33: {fileID: 928132079}
-  - 65: {fileID: 928132078}
   - 23: {fileID: 928132077}
   m_Layer: 0
   m_Name: Selection
@@ -194,19 +196,6 @@ Renderer:
   m_UseLightProbes: 0
   m_LightProbeAnchor: {fileID: 0}
   m_ScaleInLightmap: 1
---- !u!65 &928132078
-BoxCollider:
-  m_ObjectHideFlags: 0
-  m_PrefabParentObject: {fileID: 6500000, guid: 3e8d2cc135c454d489d866467b4fc276,
-    type: 2}
-  m_PrefabInternal: {fileID: 1181031541}
-  m_GameObject: {fileID: 928132076}
-  m_Material: {fileID: 0}
-  m_IsTrigger: 0
-  m_Enabled: 1
-  serializedVersion: 2
-  m_Size: {x: 1, y: 1, z: 1}
-  m_Center: {x: 0, y: 0, z: 0}
 --- !u!33 &928132079
 MeshFilter:
   m_ObjectHideFlags: 0
@@ -305,7 +294,8 @@ Prefab:
       propertyPath: m_LocalScale.z
       value: .200000003
       objectReference: {fileID: 0}
-    m_RemovedComponents: []
+    m_RemovedComponents:
+    - {fileID: 6500000, guid: 3e8d2cc135c454d489d866467b4fc276, type: 2}
   m_ParentPrefab: {fileID: 100100000, guid: 3e8d2cc135c454d489d866467b4fc276, type: 2}
   m_RootGameObject: {fileID: 928132076}
   m_IsPrefabParent: 0
@@ -563,11 +553,15 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   skin: {fileID: 11400000, guid: e730e23823daeb94b83bfa81d376d5db, type: 2}
   bonusPrefab: {fileID: 11400000, guid: 39df449e437fe9849a1053cce421a38b, type: 2}
+  countdown: {fileID: 8300000, guid: aabc675759d494e4d89e95aa5ac8a253, type: 3}
+  victorySound: {fileID: 8300000, guid: d693c5da6ba39094e9c25569d7c59a55, type: 3}
+  defeatSound: {fileID: 8300000, guid: f4bd407cdc2107241973872a1b2b3b40, type: 3}
   LevelRobotTex: {fileID: 2800000, guid: 3e4a51ba5fad81b4aaeacd6b24818fe4, type: 3}
   LevelReligionTex: {fileID: 2800000, guid: 115087526e863664182b42117f7bf71e, type: 3}
   LevelLawTex: {fileID: 2800000, guid: 9d1f0f0f76836664ca6ef49f0f513741, type: 3}
   LevelMarker: {fileID: 2800000, guid: 2f087830d23de614090dc718e12c626b, type: 3}
   hideEndgame: 0
+  didEndgame: 0
   board: {fileID: 0}
   dudeFactory: {fileID: 1933485102}
 --- !u!1 &1933485101

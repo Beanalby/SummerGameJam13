@@ -9,6 +9,12 @@ public class GameDriver : MonoBehaviour {
 
     public BonusEffect bonusPrefab;
 
+    public AudioClip countdown;
+    public AudioClip victorySound;
+    public AudioClip defeatSound;
+
+    private int countdownCutoff = 5;
+
     public Texture2D LevelRobotTex, LevelReligionTex, LevelLawTex;
     public Texture2D LevelMarker;
 
@@ -16,9 +22,11 @@ public class GameDriver : MonoBehaviour {
 
     int score;
     float gameStart;
-    private float timeElapsed, timeLeft = 60;
+    private float timeElapsed, timeLeft;
 
     public bool hideEndgame = false;
+    public bool didEndgame = false;
+
     float levelLaw;
     float levelRobot;
     float levelReligion;
@@ -135,6 +143,15 @@ public class GameDriver : MonoBehaviour {
     public void DrawEndGame() {
         if(timeLeft > 0 || hideEndgame) {
             return;
+        }
+        if(!didEndgame) {
+            // first time doing endgame, play sound.
+            if(score >= gameState.targetScore) {
+                AudioSource.PlayClipAtPoint(victorySound, Camera.main.transform.position);
+            } else {
+                AudioSource.PlayClipAtPoint(defeatSound, Camera.main.transform.position);
+            }
+            didEndgame = true;
         }
         int buttonWidth = 400, buttonHeight = 50;
         Rect endGameRect = new Rect(Screen.width * .1f, Screen.height * .25f,
@@ -297,16 +314,20 @@ public class GameDriver : MonoBehaviour {
     }
 
     public void Update() {
-        UpdateTime();
+        HandleTime();
         HandleBonusUpdate();
-        HandleDebug();
+        //HandleDebug();
     }
 
-    void UpdateTime() {
+    void HandleTime() {
         timeElapsed = Time.time - gameStart;
         timeLeft = Mathf.Max(0, gameState.gameDuration - timeElapsed);
         if(timeLeft <= 0 && board.isPlaying) {
             board.isPlaying = false;
+        } else if(timeLeft < countdownCutoff) {
+            if(Mathf.Floor(timeLeft) != Mathf.Floor(timeLeft + Time.deltaTime)) {
+                AudioSource.PlayClipAtPoint(countdown, Camera.main.transform.position);
+            }
         }
     }
     private void HandleBonusUpdate() {

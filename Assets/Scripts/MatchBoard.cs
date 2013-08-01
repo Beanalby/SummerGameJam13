@@ -43,6 +43,10 @@ public class MatchBoard : MonoBehaviour {
     public Tile SquarePrefab;
     public HintArrow HintPrefab;
 
+    public AudioClip matchSound;
+    public AudioClip matchNextSound;
+    public AudioClip matchBadSound;
+
     const int boardSize = 9;
 
     public bool isPlaying = true;
@@ -79,7 +83,7 @@ public class MatchBoard : MonoBehaviour {
     }
 
     void InitBoard() {
-        Random.seed = 123; // +++
+        //Random.seed = 123; // +++
         if(board == null) {
             board = new Tile[boardSize, boardSize];
         }
@@ -105,7 +109,7 @@ public class MatchBoard : MonoBehaviour {
             }
             HandleHint(hintCooldownDefault, null);
             HandleDrag();
-            HandleDebug();
+            //HandleDebug();
         }
     }
 
@@ -236,6 +240,7 @@ public class MatchBoard : MonoBehaviour {
             // didn't work, move the squares back
             MoveTile(current, currentPos+delta, delta.GetOpposite());
             MoveTile(other, otherPos-delta, delta, true);
+            AudioSource.PlayClipAtPoint(matchBadSound, Camera.main.transform.position);
             yield break;
         } else {
             HandleMatches(current.type, matches);
@@ -259,18 +264,21 @@ public class MatchBoard : MonoBehaviour {
         lastMatch = Time.time;
         DisableHint();
         Dictionary<TileType, int> score = new Dictionary<TileType,int>();
-        if (primaryType != TileType.None) {
+        if(primaryType != TileType.None) {
             // don't call matchedTiles if the tile they dragged isn't in matches
             bool primaryMatch = false;
-            foreach (Tile tile in matches) {
-                if (tile.type == primaryType) {
+            foreach(Tile tile in matches) {
+                if(tile.type == primaryType) {
                     primaryMatch = true;
                     break;
                 }
             }
-            if (primaryMatch) {
+            if(primaryMatch) {
                 driver.MatchedTiles(primaryType);
             }
+            AudioSource.PlayClipAtPoint(matchSound, Camera.main.transform.position);
+        } else {
+            AudioSource.PlayClipAtPoint(matchNextSound, Camera.main.transform.position);
         }
 
         foreach (Tile tile in matches) {
