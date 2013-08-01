@@ -13,7 +13,7 @@ public class TileHuman : TileDetail {
         introDescription = "Human";
         LoadTexture();
     }
-    public override void MatchedTiles(GameDriver driver, TileType matchedType) {
+    public override void MatchedTilesAsBonus(GameDriver driver, TileType matchedType) {
         if (Random.Range(0, 100) <= bonusChance) {
             driver.AddStats(matchedType, 3, true);
             driver.AddBonus(type);

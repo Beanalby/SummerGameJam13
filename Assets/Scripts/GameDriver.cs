@@ -48,7 +48,7 @@ public class GameDriver : MonoBehaviour {
         levelLaw = Random.Range(48,53);
         levelRobot = Random.Range(48,53);
         levelReligion = Random.Range(48,53);
-        levelRobot = 0; bonuses.Add(TileDetail.Human); // +++
+        //levelReligion = 100; bonuses.Add(TileDetail.Religion); // +++
 
         dudeFactory.MakeDudes(Screen.width - boardWidth, Screen.width, 0, 6,
             gameState.isRobotEnemy, gameState.isReligionEnemy, gameState.isLawEnemy);
@@ -288,7 +288,7 @@ public class GameDriver : MonoBehaviour {
 
         // let any active bonuses know about the match
         foreach (TileDetail td in bonuses) {
-            td.MatchedTiles(this, type);
+            td.MatchedTilesAsBonus(this, type);
         }
     }
 
@@ -298,15 +298,8 @@ public class GameDriver : MonoBehaviour {
 
     public void Update() {
         UpdateTime();
-        if(Input.GetKeyDown(KeyCode.S)) {
-            levelReligion -= 10;
-            levelLaw -= 10;
-            levelRobot -= 10;
-        } else if(Input.GetKeyDown(KeyCode.F)) {
-            levelReligion += 10;
-            levelLaw += 10;
-            levelRobot += 10;
-        }
+        HandleBonusUpdate();
+        HandleDebug();
     }
 
     void UpdateTime() {
@@ -314,6 +307,22 @@ public class GameDriver : MonoBehaviour {
         timeLeft = Mathf.Max(0, gameState.gameDuration - timeElapsed);
         if(timeLeft <= 0 && board.isPlaying) {
             board.isPlaying = false;
+        }
+    }
+    private void HandleBonusUpdate() {
+        foreach (TileDetail td in bonuses) {
+            td.UpdateAsBonus(this);
+        }
+    }
+    private void HandleDebug() {
+        if (Input.GetKeyDown(KeyCode.S)) {
+            levelReligion -= 10;
+            levelLaw -= 10;
+            levelRobot -= 10;
+        } else if (Input.GetKeyDown(KeyCode.F)) {
+            levelReligion += 10;
+            levelLaw += 10;
+            levelRobot += 10;
         }
     }
 }

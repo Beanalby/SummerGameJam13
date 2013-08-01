@@ -14,7 +14,7 @@ public class TileLaw : TileDetail {
         LoadTexture();
     }
 
-    public override void MatchedTiles(GameDriver driver, TileType matchedType) {
+    public override void MatchedTilesAsBonus(GameDriver driver, TileType matchedType) {
         if (driver.GetCurrentStreak() >= 2) {
             driver.AddBonus(type, bonusAmount);
         }

@@ -50,7 +50,7 @@ public class MatchBoard : MonoBehaviour {
     public Tile[,] board = null;
     private int squareMask;
 
-    private float hintCooldown = 5f;
+    private float hintCooldownDefault = 5f;
     private float noMoveCooldown = 3f;
     private float noMoveLastCheck = 0f;
     private string resetMessage = null;
@@ -103,16 +103,18 @@ public class MatchBoard : MonoBehaviour {
             } else {
                 HandleNoMoves();
             }
-            HandleHint();
+            HandleHint(hintCooldownDefault, null);
             HandleDrag();
             HandleDebug();
         }
     }
 
-    private void HandleHint() {
-        if (activeHint == null && Time.time > lastMatch + hintCooldown) {
-            EnableHint(null);
+    public bool HandleHint(float cooldown, Texture2D tex) {
+        if (activeHint == null && Time.time > lastMatch + cooldown) {
+            EnableHint(tex);
+            return true;
         }
+        return false;
     }
     /// <summary>
     /// Handles various debugging things that shouldn't be in release
@@ -543,6 +545,9 @@ public class MatchBoard : MonoBehaviour {
     }
 
     public void EnableHint(Texture2D tex = null) {
+        if (activeHint != null) {
+            return;
+        }
         DisableHint();
         Vector3 hintPosition;
         Position hintDirection;

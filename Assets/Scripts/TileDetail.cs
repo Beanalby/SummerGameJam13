@@ -108,5 +108,6 @@ public abstract class TileDetail {
     protected void LoadTexture() {
         texture = Resources.Load("Icons/Icon_" + type.ToString(), typeof(Texture2D)) as Texture2D;
     }
-    public virtual void MatchedTiles(GameDriver driver, TileType matchedType) { }
+    public virtual void MatchedTilesAsBonus(GameDriver driver, TileType matchedType) { }
+    public virtual void UpdateAsBonus(GameDriver driver) { }
 }

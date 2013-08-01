@@ -14,7 +14,7 @@ public class TileFreedom : TileDetail {
         LoadTexture();
     }
 
-    public override void MatchedTiles(GameDriver driver, TileType matchedType) {
+    public override void MatchedTilesAsBonus(GameDriver driver, TileType matchedType) {
         if (driver.GetCurrentAntiStreak() >= 4) {
             driver.AddBonus(type, bonusAmount);
         }
