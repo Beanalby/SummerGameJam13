@@ -231,22 +231,31 @@ public class MatchBoard : MonoBehaviour {
     void HandleMatches(TileType primaryType, HashSet<Tile> matches) {
         Dictionary<TileType, int> score = new Dictionary<TileType,int>();
         if (primaryType != TileType.None) {
-            driver.MatchedTiles(primaryType);
+            // don't call matchedTiles if the tile they dragged isn't in matches
+            bool primaryMatch = false;
+            foreach (Tile tile in matches) {
+                if (tile.type == primaryType) {
+                    primaryMatch = true;
+                    break;
+                }
+            }
+            if (primaryMatch) {
+                driver.MatchedTiles(primaryType);
+            }
         }
 
         foreach (Tile tile in matches) {
-            int amount = (tile.type == primaryType ? 4 : 1);
             if (score.ContainsKey(tile.type)) {
-                score[tile.type] += amount;
+                score[tile.type] += 1;
             } else {
-                score[tile.type] = amount;
+                score[tile.type] = 1;
             }
             Position pos = GetPosition(tile);
             board[pos.x, pos.y] = null;
             tile.Matched();
         }
         foreach (TileType type in score.Keys) {
-            driver.AddStats(type, score[type]);
+            driver.AddStats(type, score[type], type == primaryType);
         }
         RefillBoard();
     }
