@@ -115,6 +115,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   skin: {fileID: 11400000, guid: 411ce716f86502d47ae378444aa0f6ec, type: 2}
   SquarePrefab: {fileID: 11400000, guid: 7309143493225644a901bcf2c265f7a5, type: 2}
+  HintPrefab: {fileID: 11400000, guid: d191ebfcec36e864390a7a40df04130e, type: 2}
   isPlaying: 1
 --- !u!1001 &710254252
 Prefab:
@@ -567,6 +568,7 @@ MonoBehaviour:
   LevelLawTex: {fileID: 2800000, guid: 9d1f0f0f76836664ca6ef49f0f513741, type: 3}
   LevelMarker: {fileID: 2800000, guid: 2f087830d23de614090dc718e12c626b, type: 3}
   hideEndgame: 0
+  board: {fileID: 0}
   dudeFactory: {fileID: 1933485102}
 --- !u!1 &1933485101
 GameObject:

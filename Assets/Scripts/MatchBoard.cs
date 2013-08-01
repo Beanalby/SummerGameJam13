@@ -2,6 +2,7 @@ using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
 
+[System.Serializable]
 public class Position
 {
     public int x;
@@ -40,6 +41,8 @@ public class MatchBoard : MonoBehaviour {
     public GUISkin skin;
 
     public Tile SquarePrefab;
+    public HintArrow HintPrefab;
+
     const int boardSize = 9;
 
     public bool isPlaying = true;
@@ -47,6 +50,7 @@ public class MatchBoard : MonoBehaviour {
     public Tile[,] board = null;
     private int squareMask;
 
+    private float hintCooldown = 5f;
     private float noMoveCooldown = 3f;
     private float noMoveLastCheck = 0f;
     private string resetMessage = null;
@@ -54,12 +58,16 @@ public class MatchBoard : MonoBehaviour {
     private float resetMessageDuration = 2f;
     private Interpolate.Function resetEase = Interpolate.Ease(Interpolate.EaseType.EaseOutCirc);
 
+    private float lastMatch = -1f;
+
     private float dragThreshold = 700;
     Vector3 dragStart = Vector3.zero;
     Tile dragTile = null;
 
     private GameDriver driver;
     private GameObject selection;
+
+    private HintArrow activeHint = null;
 
     // Use this for initialization
     void Start () {
@@ -82,6 +90,8 @@ public class MatchBoard : MonoBehaviour {
         }
         // don't let it check for no moves while it's falling
         noMoveLastCheck = Time.time + 1.5f;
+        // also reset lastMatch, to delay hints
+        lastMatch = Time.time;
     }
 
     // Update is called once per frame
@@ -93,20 +103,35 @@ public class MatchBoard : MonoBehaviour {
             } else {
                 HandleNoMoves();
             }
+            HandleHint();
             HandleDrag();
-            if(Input.GetKeyDown(KeyCode.Space)) {
-                //StartCoroutine(ResetBoard("Tweaking!"));
-                List<Position> newMove = FindMatch();
-                if(newMove == null) {
-                    Debug.LogError("No move :(");
-                } else {
-                    StartCoroutine(SwapTile(
-                        board[newMove[0].x, newMove[0].y], newMove[1]));
-                }
-            }
+            HandleDebug();
         }
     }
 
+    private void HandleHint() {
+        if (activeHint == null && Time.time > lastMatch + hintCooldown) {
+            EnableHint(null);
+        }
+    }
+    /// <summary>
+    /// Handles various debugging things that shouldn't be in release
+    /// </summary>
+    private void HandleDebug() {
+        if (Input.GetKeyDown(KeyCode.Space)) {
+            //StartCoroutine(ResetBoard("Tweaking!"));
+            List<Position> newMove = FindMatch();
+            if (newMove == null) {
+                Debug.LogError("No move :(");
+            } else {
+                StartCoroutine(SwapTile(
+                    board[newMove[0].x, newMove[0].y], newMove[1]));
+            }
+        }
+        if (Input.GetKeyDown(KeyCode.R)) {
+            StartCoroutine(ResetBoard("RESET!"));
+        }
+    }
     private void HandleDrag() {
         if (Input.GetMouseButtonDown(0)) {
             Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
@@ -229,6 +254,8 @@ public class MatchBoard : MonoBehaviour {
     }
 
     void HandleMatches(TileType primaryType, HashSet<Tile> matches) {
+        lastMatch = Time.time;
+        DisableHint();
         Dictionary<TileType, int> score = new Dictionary<TileType,int>();
         if (primaryType != TileType.None) {
             // don't call matchedTiles if the tile they dragged isn't in matches
@@ -291,9 +318,9 @@ public class MatchBoard : MonoBehaviour {
 
     // removes all tiles and re-fills the board
     IEnumerator ResetBoard(string message) {
+        DisableHint();
         resetMessage = message;
         resetMessageStart = Time.time;
-
         for(int x = 0; x < boardSize; x++) {
             for(int y = 0; y < boardSize; y++) {
                 Tile tile = board[x, y];
@@ -347,8 +374,6 @@ public class MatchBoard : MonoBehaviour {
     }
 
     List<Position> FindMatch() {
-        // returns true if it's possible to make a match through a swap
-        
         // for any given position, we look for any of the following
         for (int x = 0; x < boardSize; x++) {
             for (int y = 0; y < boardSize; y++) {
@@ -517,6 +542,26 @@ public class MatchBoard : MonoBehaviour {
         return new Position(-1, -1);
     }
 
+    public void EnableHint(Texture2D tex = null) {
+        DisableHint();
+        Vector3 hintPosition;
+        Position hintDirection;
+        List<Position> move = FindMatch();
+        if (move == null) {
+            return;
+        }
+        hintPosition = new Vector3(move[0].x, move[0].y, 0);
+        hintDirection = move[1];
+        activeHint = (Instantiate(HintPrefab.gameObject) as GameObject).GetComponent<HintArrow>();
+        activeHint.hintPosition = hintPosition;
+        activeHint.hintDirection = hintDirection;
+        activeHint.tex = tex;
+    }
+    public void DisableHint() {
+        if (activeHint != null) {
+            Destroy(activeHint.gameObject);
+        }
+    }
     public void OnGUI() {
         GUI.skin = skin;
         DrawResetMessage();

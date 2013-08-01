@@ -32,7 +32,7 @@ public class GameDriver : MonoBehaviour {
     Rect levelRobotRect, levelReligionRect, levelLawRect, scoreRect;
 
     private GameState gameState;
-    private MatchBoard board;
+    public MatchBoard board;
 
     private HashSet<TileDetail> bonuses;
 
