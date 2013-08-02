@@ -3,19 +3,19 @@ using System.Collections;
 using System.Collections.Generic;
 
 [System.Serializable]
-public class Position
+public class PairInt
 {
     public int x;
     public int y;
 
-    public Position(int x, int y)
+    public PairInt(int x, int y)
     {
         this.x = x;
         this.y = y;
     }
 
-    public Position GetOpposite() {
-        return new Position(-this.x, -this.y);
+    public PairInt GetOpposite() {
+        return new PairInt(-this.x, -this.y);
     }
 
     public override int GetHashCode()
@@ -25,11 +25,11 @@ public class Position
         hashcode += y.GetHashCode();
         return hashcode;
     }
-    public static Position operator +(Position p1, Position p2) {
-        return new Position(p1.x + p2.x, p1.y + p2.y);
+    public static PairInt operator +(PairInt p1, PairInt p2) {
+        return new PairInt(p1.x + p2.x, p1.y + p2.y);
     }
-    public static Position operator -(Position p1, Position p2) {
-        return new Position(p1.x - p2.x, p1.y - p2.y);
+    public static PairInt operator -(PairInt p1, PairInt p2) {
+        return new PairInt(p1.x - p2.x, p1.y - p2.y);
     }
     public override string ToString() {
         return "(" + x + "," + y + ")";
@@ -85,7 +85,7 @@ public class MatchBoard : MonoBehaviour {
     public bool IsNewIdleSecond {
         get {
             float idle = idleDuration;
-            return (idle != 0 && Mathf.Floor(idle) != Mathf.Floor(idle - Time.deltaTime));
+            return (idle >= 1 && Mathf.Floor(idle) != Mathf.Floor(idle - Time.deltaTime));
         }
     }
 
@@ -157,12 +157,12 @@ public class MatchBoard : MonoBehaviour {
     private void HandleDebug() {
         if (Input.GetKeyDown(KeyCode.Space)) {
             //StartCoroutine(ResetBoard("Tweaking!"));
-            List<Position> newMove = FindMatch();
-            if (newMove == null) {
+            PairInt position, direction;
+            
+            if (!FindMatch(out position, out direction)) {
                 Debug.LogError("No move :(");
             } else {
-                StartCoroutine(SwapTile(
-                    board[newMove[0].x, newMove[0].y], newMove[1]));
+                SwapTile(position, direction);
             }
         }
         if (Input.GetKeyDown(KeyCode.R)) {
@@ -192,11 +192,9 @@ public class MatchBoard : MonoBehaviour {
             if (diff.sqrMagnitude > dragThreshold) {
                 // move the tile in whatever direction is largest
                 if (Mathf.Abs(diff.x) > Mathf.Abs(diff.y)) {
-                    StartCoroutine(SwapTile(dragTile,
-                        new Position(diff.x > 0 ? 1 : -1, 0)));
+                    SwapTile(dragTile, new PairInt(diff.x > 0 ? 1 : -1, 0));
                 } else {
-                    StartCoroutine(SwapTile(dragTile,
-                        new Position(0, diff.y > 0 ? 1 : -1)));
+                    SwapTile(dragTile, new PairInt(0, diff.y > 0 ? 1 : -1));
                 }
                 dragTile = null;
                 dragStart = Vector3.zero;
@@ -229,11 +227,14 @@ public class MatchBoard : MonoBehaviour {
         // tile normally as to travel full board size.  Distance is
         // lessened when its position is higher, increased by offset.
         int distance = boardSize - y + offset;
-        MoveTile(tile, new Position(x, boardSize+offset),
-            new Position(0, -distance));
+        MoveTile(tile, new PairInt(x, boardSize+offset),
+            new PairInt(0, -distance));
         return tile;
     }
 
+    public void SwapTile(PairInt position, PairInt delta, bool userStarted = true) {
+        SwapTile(board[position.x, position.y], delta, userStarted);
+    }
     /// <summary>
     /// Attempts to swap a tile in the given direction.  Makes sure
     /// it's not off the board, finds the appropriate other tile and
@@ -242,10 +243,14 @@ public class MatchBoard : MonoBehaviour {
     /// <param name="current"></param>
     /// <param name="delta"></param>
     /// <returns></returns>
-    IEnumerator SwapTile(Tile current, Position delta) {
+    public void SwapTile(Tile current, PairInt delta, bool userStarted = true) {
+        StartCoroutine(ISwapTile(current, delta, userStarted));
+    }
+
+    private IEnumerator ISwapTile(Tile current, PairInt delta, bool userStarted) {
         idleStart = -1;
-        Position currentPos = GetPosition(current);
-        Position otherPos = currentPos + delta;
+        PairInt currentPos = GetPosition(current);
+        PairInt otherPos = currentPos + delta;
         if(otherPos.x < 0 || otherPos.x >= boardSize
                 || otherPos.y < 0 || otherPos.y >= boardSize) {
             yield break; // trying to moving outside board
@@ -275,7 +280,11 @@ public class MatchBoard : MonoBehaviour {
             AudioSource.PlayClipAtPoint(matchBadSound, Camera.main.transform.position);
             yield break;
         } else {
-            HandleMatches(current.type, matches);
+            if (userStarted) {
+                HandleMatches(current.type, matches);
+            } else {
+                HandleMatches(TileType.None, matches);
+            }
         }
     }
 
@@ -284,10 +293,10 @@ public class MatchBoard : MonoBehaviour {
     /// Assumes position is valid, tile exists, etc.
     /// Used by SwapTile & refillBoard
     /// </summary>
-    private void MoveTile(Tile tile, Position from, Position delta,
+    private void MoveTile(Tile tile, PairInt from, PairInt delta,
             bool isBackground=false) {
         tile.MoveBy(from, delta, isBackground);
-        Position target = from + delta;
+        PairInt target = from + delta;
         board[target.x, target.y] = tile;
         tile.UpdateName(target);
     }
@@ -319,7 +328,7 @@ public class MatchBoard : MonoBehaviour {
             } else {
                 score[tile.type] = 1;
             }
-            Position pos = GetPosition(tile);
+            PairInt pos = GetPosition(tile);
             board[pos.x, pos.y] = null;
             tile.Matched();
         }
@@ -342,8 +351,8 @@ public class MatchBoard : MonoBehaviour {
                     numHoles++;
                 } else {
                     if (numHoles != 0) {
-                        MoveTile(tile, new Position(x, y),
-                            new Position(0, -numHoles));
+                        MoveTile(tile, new PairInt(x, y),
+                            new PairInt(0, -numHoles));
                     }
                 }
             }
@@ -415,7 +424,8 @@ public class MatchBoard : MonoBehaviour {
         return true;
     }
 
-    List<Position> FindMatch() {
+    public bool FindMatch(out PairInt position, out PairInt direction) {
+        position = null; direction = null;
         // for any given position, we look for any of the following
         for (int x = 0; x < boardSize; x++) {
             for (int y = 0; y < boardSize; y++) {
@@ -427,65 +437,85 @@ public class MatchBoard : MonoBehaviour {
                 // -------------------------------------
                 // horizontal match, tile on right joins
                 // xx.X
-                if (x >= 3)
-                    if (IsMatch(tile, board[x - 2, y], board[x - 3, y]))
-                        return new List<Position>() {
-                            new Position(x,y),
-                            new Position(-1,0) };
+                if (x >= 3) {
+                    if (IsMatch(tile, board[x - 2, y], board[x - 3, y])) {
+                        position = new PairInt(x, y);
+                        direction = new PairInt(-1, 0);
+                        return true;
+                    }
+                }
                 // ..X
                 // xx.
-                if (x >= 2 && y >= 1)
-                    if (IsMatch(tile, board[x - 1, y - 1], board[x - 2, y - 1]))
-                        return new List<Position>() {
-                            new Position(x,y),
-                            new Position(0, -1) };
+                if (x >= 2 && y >= 1) {
+                    if (IsMatch(tile, board[x - 1, y - 1], board[x - 2, y - 1])) {
+                        position = new PairInt(x, y);
+                        direction = new PairInt(0, -1);
+                        return true;
+                    }
+                }
+
                 // xx.
                 // ..X
-                if (x >= 2 && y <= max - 1)
-                    if (IsMatch(tile, board[x - 1, y + 1], board[x - 2, y + 1]))
-                        return new List<Position>() {
-                            new Position(x,y),
-                            new Position(0,1) };
+                if (x >= 2 && y <= max - 1) {
+                    if (IsMatch(tile, board[x - 1, y + 1], board[x - 2, y + 1])) {
+                        position = new PairInt(x, y);
+                        direction = new PairInt(0, 1);
+                        return true;
+                    }
+                }
 
                 // -------------------------------------
                 // horizontal match, tile on left joins
                 // X.xx
-                if (x <= max-3)
-                    if (IsMatch(tile, board[x + 2, y], board[x + 3, y]))
-                        return new List<Position>() {
-                            new Position(x,y),
-                            new Position(1,0) };
+                if (x <= max-3) {
+                    if (IsMatch(tile, board[x + 2, y], board[x + 3, y])) {
+                        position = new PairInt(x, y);
+                        direction = new PairInt(1, 0);
+                        return true;
+                    }
+                }
+
                 // X..
                 // .xx
-                if (x <= max - 2 && y >= 1)
-                    if (IsMatch(tile, board[x + 1, y - 1], board[x + 2, y - 1]))
-                        return new List<Position>() {
-                            new Position(x,y),
-                            new Position(0,-1) };
+                if (x <= max - 2 && y >= 1) {
+                    if (IsMatch(tile, board[x + 1, y - 1], board[x + 2, y - 1])) {
+                        position = new PairInt(x, y);
+                        direction = new PairInt(0, -1);
+                        return true;
+                    }
+                }
+
                 // .xx
                 // X..
-                if (x <= max - 2 && y <= max - 1)
-                    if (IsMatch(tile, board[x + 1, y + 1], board[x + 2, y + 1]))
-                        return new List<Position>() {
-                            new Position(x,y),
-                            new Position(0,1) };
+                if (x <= max - 2 && y <= max - 1) {
+                    if (IsMatch(tile, board[x + 1, y + 1], board[x + 2, y + 1])) {
+                        position = new PairInt(x, y);
+                        direction = new PairInt(0, 1);
+                        return true;
+                    }
+                }
 
                 // -------------------------------------
                 // horizontal match, tile in middle joins
                 // .X.
                 // x.x
-                if (x >= 1 && x <= max - 1 && y >= 1)
-                    if (IsMatch(tile, board[x - 1, y - 1], board[x + 1, y - 1]))
-                        return new List<Position>() {
-                            new Position(x,y),
-                            new Position(0,-1) };
+                if (x >= 1 && x <= max - 1 && y >= 1) {
+                    if (IsMatch(tile, board[x - 1, y - 1], board[x + 1, y - 1])) {
+                        position = new PairInt(x, y);
+                        direction = new PairInt(0, -1);
+                        return true;
+                    }
+                }
+
                 // x.x
                 // .X.
-                if (x >= 1 && x <= max - 1 && y <= max - 1)
-                    if (IsMatch(tile, board[x - 1, y + 1], board[x + 1, y + 1]))
-                        return new List<Position>() {
-                            new Position(x,y),
-                            new Position(0,1) };
+                if (x >= 1 && x <= max - 1 && y <= max - 1) {
+                    if (IsMatch(tile, board[x - 1, y + 1], board[x + 1, y + 1])) {
+                        position = new PairInt(x, y);
+                        direction = new PairInt(0, 1);
+                        return true;
+                    }
+                }
 
                 // -------------------------------------
                 // vertical match, tile on top joins
@@ -493,111 +523,141 @@ public class MatchBoard : MonoBehaviour {
                 // .
                 // x
                 // x
-                if (y >= 3)
-                    if (IsMatch(tile, board[x, y - 2], board[x, y - 3]))
-                        return new List<Position>() {
-                            new Position(x,y),
-                            new Position(0,-1) };
+                if (y >= 3) {
+                    if (IsMatch(tile, board[x, y - 2], board[x, y - 3])) {
+                        position = new PairInt(x, y);
+                        direction = new PairInt(0, -1);
+                        return true;
+                    }
+                }
+
                 // X.
                 // .x
                 // .x
-                if (x <= max - 1 && y >= 2)
-                    if (IsMatch(tile, board[x + 1, y - 1], board[x + 1, y - 2]))
-                        return new List<Position>() {
-                            new Position(x,y),
-                            new Position(1,0) };
+                if (x <= max - 1 && y >= 2) {
+                    if (IsMatch(tile, board[x + 1, y - 1], board[x + 1, y - 2])) {
+                        position = new PairInt(x, y);
+                        direction = new PairInt(1, 0);
+                        return true;
+                    }
+                }
+
                 // .X
                 // x.
                 // x.
-                if (x >= 1 && y >= 2)
-                    if (IsMatch(tile, board[x - 1, y - 1], board[x - 1, y - 2]))
-                        return new List<Position>() {
-                            new Position(x,y),
-                            new Position(-1,0) };
+                if (x >= 1 && y >= 2) {
+                    if (IsMatch(tile, board[x - 1, y - 1], board[x - 1, y - 2])) {
+                        position = new PairInt(x, y);
+                        direction = new PairInt(-1, 0);
+                        return true;
+                    }
+                }
+
                 // -------------------------------------
                 // vertical match, tile on bottom joins
                 // x
                 // x
                 // .
                 // X
-                if (y <= max - 3)
-                    if (IsMatch(tile, board[x, y + 2], board[x, y + 3]))
-                        return new List<Position>() {
-                            new Position(x,y),
-                            new Position(0,1) };
+                if (y <= max - 3) {
+                    if (IsMatch(tile, board[x, y + 2], board[x, y + 3])) {
+                        position = new PairInt(x, y);
+                        direction = new PairInt(0,1);
+                        return true;
+                    }
+                }
+
                 // .x
                 // .x
                 // X.
-                if (x <= max - 1 && y <= max - 2)
-                    if (IsMatch(tile, board[x + 1, y + 1], board[x + 1, y + 2]))
-                        return new List<Position>() {
-                            new Position(x,y),
-                            new Position(1,0) };
+                if (x <= max - 1 && y <= max - 2) {
+                    if (IsMatch(tile, board[x + 1, y + 1], board[x + 1, y + 2])) {
+                        position = new PairInt(x, y);
+                        direction = new PairInt(1,0);
+                        return true;
+                    }
+                }
+
                 // x.
                 // x.
                 // .X
-                if (x >= 1 && y <= max - 2)
-                    if (IsMatch(tile, board[x - 1, y + 1], board[x - 1, y + 2]))
-                        return new List<Position>() {
-                            new Position(x,y),
-                            new Position(-1,0) };
+                if (x >= 1 && y <= max - 2) {
+                    if (IsMatch(tile, board[x - 1, y + 1], board[x - 1, y + 2])) {
+                        position = new PairInt(x, y);
+                        direction = new PairInt(-1,0);
+                        return true;
+                    }
+                }
 
                 // -------------------------------------
                 // vertical match, tile in middle joins
                 // x.
                 // .X
                 // x.
-                if (x >= 1 && y >= 1 && y <= max - 1)
-                    if (IsMatch(tile, board[x - 1, y - 1], board[x - 1, y + 1]))
-                        return new List<Position>() {
-                            new Position(x,y),
-                            new Position(-1,0) };
+                if (x >= 1 && y >= 1 && y <= max - 1) {
+                    if (IsMatch(tile, board[x - 1, y - 1], board[x - 1, y + 1])) {
+                        position = new PairInt(x, y);
+                        direction = new PairInt(-1,0);
+                        return true;
+                    }
+                }
+
                 // .x
                 // X.
                 // .x
-                if (x <= max - 1 && y >= 1 && y <= max - 1)
-                    if (IsMatch(tile, board[x + 1, y - 1], board[x + 1, y + 1]))
-                        return new List<Position>() {
-                            new Position(x,y),
-                            new Position(1,0) };
+                if (x <= max - 1 && y >= 1 && y <= max - 1) {
+                    if (IsMatch(tile, board[x + 1, y - 1], board[x + 1, y + 1])) {
+                        position = new PairInt(x, y);
+                        direction = new PairInt(1,0);
+                        return true;
+                    }
+                }
             }
         }
-
-        return null;
+        return false;
     }
     bool HasPotentialMatch() {
-        return FindMatch() != null;
+        PairInt dontcare, nope;
+        return FindMatch(out dontcare, out nope);
     }
 
     /// <summary>
     /// Returns the current board position of a given square
     /// </summary>
-    public Position GetPosition(Tile square) {
+    public PairInt GetPosition(Tile square) {
         for (int i = 0; i < boardSize; i++) {
             for (int j = 0; j < boardSize; j++) {
                 if (board[i, j] == square) {
-                    return new Position(i, j);
+                    return new PairInt(i, j);
                 }
             }
         }
         Debug.LogError("Couldn't find position for " + square.name);
-        return new Position(-1, -1);
+        return new PairInt(-1, -1);
     }
 
+    private HintArrow CreateHintArrow() {
+        return (Instantiate(HintPrefab.gameObject) as GameObject).GetComponent<HintArrow>();
+    }
+    public void CreateHintOneShot(PairInt position, PairInt direction, Texture2D tex) {
+        HintArrow hint = CreateHintArrow();
+        hint.hintPosition = position;
+        hint.hintDirection = direction;
+        hint.tex = tex;
+        hint.moveDuration /= 2;
+        hint.IsOneShot = true;
+    }
     public void EnableHint(Texture2D tex = null) {
         if (activeHint != null) {
             return;
         }
         DisableHint();
-        Vector3 hintPosition;
-        Position hintDirection;
-        List<Position> move = FindMatch();
-        if (move == null) {
+        PairInt hintPosition;
+        PairInt hintDirection;
+        if (!FindMatch(out hintPosition, out hintDirection)) {
             return;
         }
-        hintPosition = new Vector3(move[0].x, move[0].y, 0);
-        hintDirection = move[1];
-        activeHint = (Instantiate(HintPrefab.gameObject) as GameObject).GetComponent<HintArrow>();
+        activeHint = CreateHintArrow();
         activeHint.hintPosition = hintPosition;
         activeHint.hintDirection = hintDirection;
         activeHint.tex = tex;
@@ -609,7 +669,7 @@ public class MatchBoard : MonoBehaviour {
     }
     public void OnGUI() {
         GUI.skin = skin;
-        GUI.Label(new Rect(0, 200, 300, 50), "+++ idle=" + idleDuration.ToString(".0"));
+        //GUI.Label(new Rect(0, 200, 300, 50), "+++ idle=" + idleDuration.ToString(".0"));
         DrawResetMessage();
     }
 

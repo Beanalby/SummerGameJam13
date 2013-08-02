@@ -8,6 +8,7 @@ public class GameState : MonoBehaviour {
         get {
             if(_instance == null) {
                 GameObject obj = new GameObject();
+                obj.name = "[GameState]";
                 GameState state = obj.AddComponent<GameState>();
                 _instance = state;
                 _instance.isRobotEnemy = Random.Range(0f, 1f) < .5f;

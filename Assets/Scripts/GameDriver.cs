@@ -56,7 +56,7 @@ public class GameDriver : MonoBehaviour {
         levelLaw = Random.Range(48,53);
         levelRobot = Random.Range(48,53);
         levelReligion = Random.Range(48,53);
-        //levelReligion = 100; bonuses.Add(TileDetail.Religion); // +++
+        levelRobot = 100; bonuses.Add(TileDetail.Robot); // +++
 
         dudeFactory.MakeDudes(Screen.width - boardWidth, Screen.width, 0, 6,
             gameState.isRobotEnemy, gameState.isReligionEnemy, gameState.isLawEnemy);

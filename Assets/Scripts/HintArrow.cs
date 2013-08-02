@@ -2,10 +2,11 @@
 using System.Collections;
 
 public class HintArrow : MonoBehaviour {
-    public Vector3 hintPosition;
-    public Position hintDirection;
+    public PairInt hintPosition;
+    public PairInt hintDirection;
     public float moveDuration;
     public Texture2D tex;
+    public bool IsOneShot=false;
 
     private GameObject mesh;
     private float startTime;
@@ -26,7 +27,7 @@ public class HintArrow : MonoBehaviour {
         } else if (hintDirection.x == 1) {
             mesh.transform.localEulerAngles = new Vector3(0, 0, 270);
         }
-        moveStart = hintPosition;
+        moveStart = new Vector3(hintPosition.x, hintPosition.y, 0);
         moveDelta = new Vector3(hintDirection.x, hintDirection.y, 0);
         startTime = Time.time;
         mr = GetComponentInChildren<MeshRenderer>();
@@ -37,7 +38,12 @@ public class HintArrow : MonoBehaviour {
     }
 
     public void Update() {
-        float percent = ((Time.time - startTime) % moveDuration) / moveDuration;
+        float tmp = (Time.time - startTime) / moveDuration;
+        if (IsOneShot && tmp >= 1) {
+            Destroy(gameObject);
+            return;
+        }
+        float percent = tmp % 1;
         transform.position = Interpolate.Ease(ease, moveStart, moveDelta, percent, 1);
         if (percent <= .5f) {
             color.a = 1;

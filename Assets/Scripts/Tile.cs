@@ -88,18 +88,18 @@ public class Tile : MonoBehaviour {
     /// Invoked when a board's position changes to update its name
     /// </summary>
     public void UpdateName() {
-        Position pos = board.GetPosition(this);
+        PairInt pos = board.GetPosition(this);
         UpdateName(pos);
     }
 
-    public void UpdateName(Position pos) {
+    public void UpdateName(PairInt pos) {
         name = pos.ToString() + type.ToString();
     }
 
     /// <summary>
     /// Invoked when it needs to swap to a different location
     /// </summary>
-    public void MoveBy(Position from, Position delta, bool isBackground) {
+    public void MoveBy(PairInt from, PairInt delta, bool isBackground) {
         moveFrom = new Vector3(from.x, from.y, 0);
         // isBackground makes tiles that the user DIDN'T click on move
         // slighitly behind the one they did click on, so whatever they
