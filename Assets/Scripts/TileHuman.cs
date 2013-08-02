@@ -15,7 +15,7 @@ public class TileHuman : TileDetail {
     }
     public override void MatchedTilesAsBonus(GameDriver driver, TileType matchedType) {
         if (Random.Range(0, 100) <= bonusChance) {
-            driver.AddStats(matchedType, 3, true);
+            driver.AddStats(matchedType, 3, matchedType);
             driver.AddBonus(type);
         }
     }

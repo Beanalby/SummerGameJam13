@@ -110,4 +110,5 @@ public abstract class TileDetail {
     }
     public virtual void MatchedTilesAsBonus(GameDriver driver, TileType matchedType) { }
     public virtual void UpdateAsBonus(GameDriver driver) { }
+    public virtual void AddStatsAsBonus(GameDriver driver, TileType statsType, float amount, TileType primaryType) { }
 }

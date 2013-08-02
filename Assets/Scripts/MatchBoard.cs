@@ -63,7 +63,6 @@ public class MatchBoard : MonoBehaviour {
     private Interpolate.Function resetEase = Interpolate.Ease(Interpolate.EaseType.EaseOutCirc);
     private float idleStart;
 
-
     private float dragThreshold = 700;
     Vector3 dragStart = Vector3.zero;
     Tile dragTile = null;
@@ -88,7 +87,6 @@ public class MatchBoard : MonoBehaviour {
             return (idle >= 1 && Mathf.Floor(idle) != Mathf.Floor(idle - Time.deltaTime));
         }
     }
-
     // Use this for initialization
     void Start () {
         driver = GameObject.Find("GameDriver").GetComponent<GameDriver>();
@@ -333,7 +331,7 @@ public class MatchBoard : MonoBehaviour {
             tile.Matched();
         }
         foreach (TileType type in score.Keys) {
-            driver.AddStats(type, score[type], type == primaryType);
+            driver.AddStats(type, score[type], primaryType);
         }
         RefillBoard();
     }

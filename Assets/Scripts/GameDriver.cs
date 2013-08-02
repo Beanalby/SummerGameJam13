@@ -56,7 +56,7 @@ public class GameDriver : MonoBehaviour {
         levelLaw = Random.Range(48,53);
         levelRobot = Random.Range(48,53);
         levelReligion = Random.Range(48,53);
-        levelRobot = 100; bonuses.Add(TileDetail.Robot); // +++
+        //levelReligion = 0; bonuses.Add(TileDetail.Science); // +++
 
         dudeFactory.MakeDudes(Screen.width - boardWidth, Screen.width, 0, 6,
             gameState.isRobotEnemy, gameState.isReligionEnemy, gameState.isLawEnemy);
@@ -222,11 +222,11 @@ public class GameDriver : MonoBehaviour {
         bonus.amount = amount;
     }
 
-    public void AddStats(TileType type, float amount, bool isMatch) {
+    public void AddStats(TileType type, float amount, TileType primaryType) {
         if(!board.isPlaying) {
             return;
         }
-        if (isMatch) {
+        if (type == primaryType) {
             // direct matches are worth more
             amount *= 4;
         }
@@ -257,6 +257,9 @@ public class GameDriver : MonoBehaviour {
         TileDetail opposite = TileDetail.GetOpposite(type);
         if (opposite != null && !IsBonusActive(opposite.type)) {
             bonuses.Remove(opposite);
+        }
+        foreach (TileDetail bonus in bonuses) {
+            bonus.AddStatsAsBonus(this, type, amount, primaryType);
         }
     }
 
@@ -293,6 +296,10 @@ public class GameDriver : MonoBehaviour {
             }
         }
         return streak;
+    }
+
+    public float GetTime() {
+        return Time.time;
     }
 
     // Indicates the user actively matched a type of tiles, might
