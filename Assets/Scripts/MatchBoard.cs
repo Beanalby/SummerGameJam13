@@ -61,8 +61,8 @@ public class MatchBoard : MonoBehaviour {
     private float resetMessageStart = -1f;
     private float resetMessageDuration = 2f;
     private Interpolate.Function resetEase = Interpolate.Ease(Interpolate.EaseType.EaseOutCirc);
+    private float idleStart;
 
-    private float lastMatch = -1f;
 
     private float dragThreshold = 700;
     Vector3 dragStart = Vector3.zero;
@@ -72,6 +72,22 @@ public class MatchBoard : MonoBehaviour {
     private GameObject selection;
 
     private HintArrow activeHint = null;
+
+    public float idleDuration {
+        get {
+            if (idleStart == -1) {
+                return 0;
+            } else {
+                return Time.time - idleStart;
+            }
+        }
+    }
+    public bool IsNewIdleSecond {
+        get {
+            float idle = idleDuration;
+            return (idle != 0 && Mathf.Floor(idle) != Mathf.Floor(idle - Time.deltaTime));
+        }
+    }
 
     // Use this for initialization
     void Start () {
@@ -94,8 +110,8 @@ public class MatchBoard : MonoBehaviour {
         }
         // don't let it check for no moves while it's falling
         noMoveLastCheck = Time.time + 1.5f;
-        // also reset lastMatch, to delay hints
-        lastMatch = Time.time;
+        // also reset idle, to delay hints
+        idleStart = -1;
     }
 
     // Update is called once per frame
@@ -107,19 +123,34 @@ public class MatchBoard : MonoBehaviour {
             } else {
                 HandleNoMoves();
             }
-            HandleHint(hintCooldownDefault, null);
             HandleDrag();
+            HandleHint(hintCooldownDefault, null);
+            HandleIdle();
             //HandleDebug();
         }
     }
 
     public bool HandleHint(float cooldown, Texture2D tex) {
-        if (activeHint == null && Time.time > lastMatch + cooldown) {
+        if (activeHint == null && idleDuration > cooldown) {
             EnableHint(tex);
             return true;
         }
         return false;
     }
+
+    public void HandleIdle() {
+        // sets the idle starting point if it wasn't already set and
+        // there's nothing moving on the board
+        if (idleStart == -1) {
+            foreach (Tile tile in board) {
+                if (tile.IsBusy) {
+                    return;
+                }
+            }
+            idleStart = Time.time;
+        }
+    }
+
     /// <summary>
     /// Handles various debugging things that shouldn't be in release
     /// </summary>
@@ -212,6 +243,7 @@ public class MatchBoard : MonoBehaviour {
     /// <param name="delta"></param>
     /// <returns></returns>
     IEnumerator SwapTile(Tile current, Position delta) {
+        idleStart = -1;
         Position currentPos = GetPosition(current);
         Position otherPos = currentPos + delta;
         if(otherPos.x < 0 || otherPos.x >= boardSize
@@ -261,7 +293,7 @@ public class MatchBoard : MonoBehaviour {
     }
 
     void HandleMatches(TileType primaryType, HashSet<Tile> matches) {
-        lastMatch = Time.time;
+        idleStart = -1;
         DisableHint();
         Dictionary<TileType, int> score = new Dictionary<TileType,int>();
         if(primaryType != TileType.None) {
@@ -577,6 +609,7 @@ public class MatchBoard : MonoBehaviour {
     }
     public void OnGUI() {
         GUI.skin = skin;
+        GUI.Label(new Rect(0, 200, 300, 50), "+++ idle=" + idleDuration.ToString(".0"));
         DrawResetMessage();
     }
 
