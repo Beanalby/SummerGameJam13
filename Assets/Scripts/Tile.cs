@@ -42,10 +42,10 @@ public class Tile : MonoBehaviour {
         StartCoroutine(HandleDeath());
     }
     private IEnumerator HandleDeath() {
-        gameObject.AddComponent<Rigidbody>();
-        rigidbody.velocity = new Vector3(Random.Range(-1f,1f),
+        Rigidbody rb = gameObject.AddComponent<Rigidbody>();
+        rb.velocity = new Vector3(Random.Range(-1f,1f),
             Random.Range(-1f, 1f), Random.Range(-1.5f, -.5f));
-        rigidbody.angularVelocity = new Vector3(Random.Range(-1f,1f),
+        rb.angularVelocity = new Vector3(Random.Range(-1f,1f),
             Random.Range(-1f, 1f), Random.Range(-1.5f, -.5f));
         yield return new WaitForSeconds(deathDuration);
         Destroy(gameObject);

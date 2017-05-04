@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using System.Collections;
 using System.Collections.Generic;
 
@@ -55,7 +56,7 @@ public class IntroDriver : MonoBehaviour {
         GUI.Label(extraLabel, "+Time", style);
 
         if (GUI.Button(buttonRect, "Fight the " + gameState.GetEnemyName() + " government!")) {
-            Application.LoadLevel("game");
+            SceneManager.LoadScene("game");
         }
     }
 

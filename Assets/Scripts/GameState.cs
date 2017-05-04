@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using System.Collections;
 
 public class GameState : MonoBehaviour {
@@ -39,7 +40,7 @@ public class GameState : MonoBehaviour {
     }
     public void RestartEasier() {
         targetScore /= 2;
-        Application.LoadLevel("intro");
+        SceneManager.LoadScene("intro");
     }
 
     public void Restart() {
@@ -47,13 +48,13 @@ public class GameState : MonoBehaviour {
         isReligionEnemy = isReligionPlayer;
         isLawEnemy = isLawPlayer;
         targetScore = (int)(targetScore * 1.5);
-        Application.LoadLevel("intro");
+        SceneManager.LoadScene("intro");
     }
     public void Transition(bool isRobotNew, bool isReligionNew, bool isLawNew) {
         isRobotPlayer = isRobotNew;
         isReligionPlayer = isReligionNew;
         isLawPlayer = isLawNew;
-        Application.LoadLevel("transition");
+        SceneManager.LoadScene("transition");
     }
 
     public string Flags2name(bool isRobot, bool isReligion, bool isLaw) {

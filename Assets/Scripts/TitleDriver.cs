@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using UnityEngine.SceneManagement;
 using System.Collections;
 
 public class TitleDriver : MonoBehaviour {
@@ -16,7 +17,7 @@ public class TitleDriver : MonoBehaviour {
         Rect rect = new Rect(pos.x, pos.y, Screen.width, 300);
         GUI.Label(rect, "Overthrow");
         if(Time.time > titleDuration) {
-            Application.LoadLevel("intro");
+            SceneManager.LoadScene("intro");
         }
     }
 }
