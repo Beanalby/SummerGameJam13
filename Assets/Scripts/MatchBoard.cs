@@ -91,7 +91,7 @@ public class MatchBoard : MonoBehaviour {
     void Start () {
         driver = GameObject.Find("GameDriver").GetComponent<GameDriver>();
         squareMask = 1 << LayerMask.NameToLayer("Square");
-        selection = transform.FindChild("Selection").gameObject;
+        selection = transform.Find("Selection").gameObject;
         selection.SetActive(false);
         InitBoard();
     }

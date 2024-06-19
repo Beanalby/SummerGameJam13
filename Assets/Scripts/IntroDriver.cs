@@ -22,12 +22,14 @@ public class IntroDriver : MonoBehaviour {
 
     public void OnGUI() {
         GUI.skin = skin;
-        GUI.Label(new Rect(0, 0,
-                Screen.width, Screen.height * .4f),
-            "The " + gameState.GetEnemyName() + " government has ruled too long. It's time for them to go.\n\n\n\n\n\n\n\nMatch 3 symbols to get support and change your affiliations.\nCollect " + gameState.targetScore + " support to overthrow the government.");
+        GUI.Label(new Rect(0, 0, Screen.width, Screen.height * .4f),
+            "The " + gameState.GetEnemyName() + " government has ruled too long. It's time for them to go.\n\n\n\n\n\n\n\n"
+                + "Click and Drag to match 3 or more symbols.\n"
+                + "Match symbols to get support and change your affiliations.\n"
+                + "Collect " + gameState.targetScore + " support to overthrow the government.");
         GUI.Label(new Rect(0, Screen.height * .4f,
                 Screen.width, Screen.height * .2f),
-            "Which your uprising be?");
+            "What will your\nuprising be?");
         Rect buttonRect = new Rect(Screen.width * .2f, Screen.height * .9f,
             Screen.width * .6f, 50);
 
@@ -45,15 +47,17 @@ public class IntroDriver : MonoBehaviour {
             Screen.height * .15f, Screen.height * .15f);
         Rect extraLabel = new Rect(0, Screen.height * .95f, 300, 50);
         GUI.DrawTexture(extraRect, TileDetail.Score.texture);
-        GUI.Label(extraLabel, "+Score");
+        GUIStyle scoreStyle = new GUIStyle(hudSkin.label);
+        scoreStyle.alignment = TextAnchor.UpperLeft;
+        GUI.Label(extraLabel, "Match for +Score", scoreStyle);
 
         extraRect = new Rect(Screen.width - Screen.height * .15f, Screen.height * .8f,
             Screen.height * .15f, Screen.height * .15f);
         extraLabel = new Rect(Screen.width - 300, Screen.height * .95f, 300, 50);
         GUI.DrawTexture(extraRect, TileDetail.Time.texture);
-        GUIStyle style = new GUIStyle(hudSkin.label);
-        style.alignment = TextAnchor.UpperRight;
-        GUI.Label(extraLabel, "+Time", style);
+        GUIStyle timeStyle = new GUIStyle(hudSkin.label);
+        timeStyle.alignment = TextAnchor.UpperRight;
+        GUI.Label(extraLabel, "Match for +Time", timeStyle);
 
         if (GUI.Button(buttonRect, "Fight the " + gameState.GetEnemyName() + " government!")) {
             SceneManager.LoadScene("game");
